@@ -1,5 +1,12 @@
 import React, { useState, useContext } from "react";
-import { View, TextInput, Button, Text, Alert } from "react-native";
+import {
+  View,
+  TextInput,
+  Button,
+  Text,
+  Alert,
+  TouchableOpacity,
+} from "react-native";
 import styles from "../constants/styles";
 import { Store } from "@/Store";
 import { Link } from "expo-router";
@@ -49,7 +56,19 @@ const Signin = () => {
       />
       <Button disabled={isLoading} title="Submit" onPress={submit} />
       <Text>
-        Not a member yet? <Link href="/signup">Sign up instead</Link>
+        Not a member yet?{" "}
+        <Link href="/signup">
+          <Text
+            style={{
+              color: "blue",
+              textDecorationLine: "underline",
+              fontWeight: "bold",
+            }}
+          >
+            Sign up
+          </Text>
+          &nbsp;instead
+        </Link>
       </Text>
       {isLoading && <Text>...loading</Text>}
     </View>

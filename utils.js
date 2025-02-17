@@ -1,3 +1,5 @@
-import { MMKV } from "react-native-mmkv";
-
-export const storage = new MMKV();
+export const getError = (error) => {
+  return error.response && error.response.data.message
+    ? error.response.data.message
+    : error.message;
+};

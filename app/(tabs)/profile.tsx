@@ -10,10 +10,7 @@ import {
 import { useEffect, useState, useContext } from "react";
 import { Link } from "expo-router";
 import { Store } from "@/Store";
-// import { storage } from "@/utils";
-// import { MMKV } from "react-native-mmkv";
-
-// const storage = new MMKV();
+import Ionicons from "@expo/vector-icons/Ionicons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function Profile() {
@@ -33,15 +30,60 @@ export default function Profile() {
     <ScrollView>
       <View style={styles.container}>
         {userInfo ? (
-          <TouchableOpacity onPress={signoutHandler}>
-            <Text>Logout</Text>
-          </TouchableOpacity>
+          <View style={styles.profile}>
+            <Ionicons name={"person"} size={200} color={"white"} />
+            <Text style={styles.welcome}>
+              {" "}
+              Welcome {userInfo.name} &nbsp;({userInfo.email})
+            </Text>
+            <TouchableOpacity
+              onPress={signoutHandler}
+              style={styles.buttonLogout}
+            >
+              <Text style={styles.logoutText}>Logout</Text>
+            </TouchableOpacity>
+          </View>
         ) : (
-          <TouchableOpacity style={styles.signinButton}>
-            <Link href="/signin">
-              <Text style={styles.signinButtonText}>Sign in</Text>
-            </Link>
-          </TouchableOpacity>
+          <View style={styles.auth}>
+            <View
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                gap: 12,
+                width: "80%",
+              }}
+            >
+              <Text
+                style={{ color: "white", fontSize: 18, fontWeight: "bold" }}
+              >
+                Member?
+              </Text>
+              <TouchableOpacity style={styles.signinButton}>
+                <Link href="/signin">
+                  <Text style={styles.signinButtonText}>Sign in</Text>
+                </Link>
+              </TouchableOpacity>
+            </View>
+            <View
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                gap: 12,
+                width: "80%",
+              }}
+            >
+              <Text
+                style={{ color: "white", fontSize: 18, fontWeight: "bold" }}
+              >
+                Not a member yet?
+              </Text>
+              <TouchableOpacity style={styles.signinButton}>
+                <Link href="/signup">
+                  <Text style={styles.signinButtonText}>Sign up</Text>
+                </Link>
+              </TouchableOpacity>
+            </View>
+          </View>
         )}
 
         <View style={styles.copyContainer}></View>
@@ -57,6 +99,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     padding: 15,
+    height: 780,
   },
   text: {
     color: "#fff",
@@ -87,18 +130,43 @@ const styles = StyleSheet.create({
     color: "white",
   },
   signinButton: {
-    width: "85%",
     backgroundColor: "green",
-    padding: 8,
+    padding: 4,
     color: "white",
     borderRadius: 4,
-    marginRight: 8,
-    justifyContent: "center",
-    alignItems: "center",
   },
   signinButtonText: {
     color: "white",
     fontWeight: "bold",
     fontSize: 16,
+  },
+  buttonLogout: {
+    width: "80%",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "red",
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    paddingVertical: 10,
+  },
+  logoutText: {
+    color: "white",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  welcome: {
+    color: "white",
+    marginVertical: 10,
+  },
+  profile: {
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  auth: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 10,
   },
 });

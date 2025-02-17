@@ -72,7 +72,19 @@ const Signup = () => {
       <Button disabled={isLoading} title="Submit" onPress={submit} />
       {isLoading && <Text>...loading</Text>}
       <Text>
-        Already a member? <Link href="/signin">Sign in instead</Link>
+        Already a member?{" "}
+        <Link href="/signin">
+          <Text
+            style={{
+              color: "blue",
+              textDecorationLine: "underline",
+              fontWeight: "bold",
+            }}
+          >
+            Sign in
+          </Text>
+          &nbsp;instead
+        </Link>
       </Text>
     </View>
   );
