@@ -8,7 +8,7 @@ import {
   Alert,
 } from "react-native";
 import { useEffect, useState, useContext } from "react";
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import { Store } from "@/Store";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -17,13 +17,16 @@ export default function Profile() {
   const { state, dispatch } = useContext(Store);
   const { userInfo } = state;
 
+  const router = useRouter();
+
   const signoutHandler = () => {
     dispatch({ type: "USER_SIGNOUT" });
     AsyncStorage.removeItem("userInfo");
     AsyncStorage.removeItem("cartItems");
     AsyncStorage.removeItem("shippingAddress");
     AsyncStorage.removeItem("paymentMethod");
-    Alert.alert("Logged Out", "You've been successfully logged out");
+    Alert.alert("Logged Out", "You're logged out. Come back soon.");
+    router.navigate("/");
   };
 
   return (
@@ -33,7 +36,6 @@ export default function Profile() {
           <View style={styles.profile}>
             <Ionicons name={"person"} size={200} color={"white"} />
             <Text style={styles.welcome}>
-              {" "}
               Welcome {userInfo.name} &nbsp;({userInfo.email})
             </Text>
             <TouchableOpacity

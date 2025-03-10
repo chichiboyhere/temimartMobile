@@ -157,6 +157,7 @@ const initialState: AppState = {
 type Action =
   | { type: "CART_ADD_ITEM"; payload: CartItem }
   | { type: "CART_REMOVE_ITEM"; payload: CartItem }
+  | { type: "CART_RESTORE_ITEMS"; payload: CartItem }
   | { type: "CART_CLEAR" }
   | { type: "USER_SIGNIN"; payload: UserInfo }
   | { type: "USER_SIGNOUT" }
@@ -187,6 +188,9 @@ function reducer(state: AppState, action: Action): AppState {
       AsyncStorage.setItem("cartItems", JSON.stringify(cartItems));
       return { ...state, cart: { ...state.cart, cartItems } };
     }
+    case "CART_RESTORE_ITEMS":
+      return { ...state, cart: { ...state.cart, cartItems: action.payload } };
+
     case "CART_CLEAR":
       return { ...state, cart: { ...state.cart, cartItems: [] } };
 
@@ -253,7 +257,7 @@ function StoreProvider({ children }) {
 
     if (cartItems) {
       dispatch({
-        type: "CART_ADD_ITEM",
+        type: "CART_RESTORE_ITEMS", // New action type
         payload: JSON.parse(cartItems),
       });
     }

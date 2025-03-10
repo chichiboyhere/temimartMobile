@@ -29,6 +29,12 @@ export default function RootLayout() {
           />
           <Stack.Screen name="signin" options={{ title: "SignIn" }} />
           <Stack.Screen name="signup" options={{ title: "SignUp" }} />
+          <Stack.Screen name="shipping" options={{ title: "Shipping" }} />
+          <Stack.Screen name="order" options={{ title: "Order" }} />
+          <Stack.Screen
+            name="orderDetail/[id]"
+            options={{ headerShown: false }}
+          />
         </Stack>
         <StatusBar style="light" />
       </StoreProvider>

@@ -2,7 +2,7 @@ import React, { useState, useContext } from "react";
 import { View, TextInput, Button, Text, Alert } from "react-native";
 import styles from "../constants/styles";
 import { Store } from "@/Store";
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -14,6 +14,8 @@ const Signup = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
+  const router = useRouter();
 
   const { mutateAsync: signup, isLoading } = useSignupMutation();
 
@@ -28,6 +30,7 @@ const Signup = () => {
       dispatch({ type: "USER_SIGNIN", payload: data });
       await AsyncStorage.setItem("userInfo", JSON.stringify(data));
       Alert.alert("Registered!", "You're successfully Registered!");
+      router.navigate("/");
     } catch (err) {
       if (err instanceof Error) {
         console.log(err.message);

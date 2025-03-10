@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import styles from "../constants/styles";
 import { Store } from "@/Store";
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { useSigninMutation } from "@/hooks/userHooks";
@@ -18,6 +18,7 @@ const Signin = () => {
   const { state, dispatch } = useContext(Store);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const router = useRouter();
 
   const { mutateAsync: signin, isLoading } = useSigninMutation();
 
@@ -28,6 +29,7 @@ const Signin = () => {
       dispatch({ type: "USER_SIGNIN", payload: data });
       await AsyncStorage.setItem("userInfo", JSON.stringify(data));
       Alert.alert("Logged In", "You're successfully logged in!");
+      router.navigate("/");
     } catch (err) {
       if (err instanceof Error) {
         console.log(err.message);

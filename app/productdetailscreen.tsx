@@ -12,14 +12,14 @@ import {
 } from "react-native";
 import Rating from "../components/Rating";
 import axios from "axios";
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { Store } from "@/Store";
 import styles from "@/constants/styles";
 import { getError } from "../utils";
 import SelectList from "react-native-dropdown-select-list";
 import SelectDropdown from "react-native-select-dropdown";
-//import Icon from "react-native-vector-icons";
+
 import Ionicons from "@expo/vector-icons/Ionicons";
 
 const reducer = (state, action) => {
@@ -49,12 +49,14 @@ type ProductDetailRouteProp = RouteProp<
 >;
 
 export default function ProductDetailScreen() {
-  const { state } = useContext(Store);
-  const { userInfo } = state;
+  const { state, dispatch: ctxDispatch } = useContext(Store);
+  const { cart, userInfo } = state;
+
   const route = useRoute<ProductDetailRouteProp>();
   const navigation = useNavigation();
   const { slug } = route.params;
 
+  const router = useRouter();
   //const { addToCart } = useContext(CartContext);
 
   const [rating, setRating] = useState(1);
@@ -116,10 +118,21 @@ export default function ProductDetailScreen() {
     );
   }
 
-  const handleAddToCart = () => {
-    addToCart(product);
-    Alert.alert("Success", `${product.name} has been added to your cart.`);
-    navigation.navigate("Cart");
+  const addToCartHandler = async () => {
+    const existItem = cart.cartItems.find((x) => x._id === product._id);
+    const quantity = existItem ? existItem.quantity + 1 : 1;
+    const { data } = await axios.get(
+      `https://temimartapi.onrender.com/api/products/${product._id}`
+    );
+    if (data.countInStock < quantity) {
+      window.alert("Sorry. Product is out of stock");
+      return;
+    }
+    ctxDispatch({
+      type: "CART_ADD_ITEM",
+      payload: { ...product, quantity },
+    });
+    router.navigate("/cart");
   };
 
   const submit = async () => {
@@ -168,8 +181,8 @@ export default function ProductDetailScreen() {
       <Text style={{ fontSize: 24, fontWeight: "bold", marginVertical: 10 }}>
         {product.name}
       </Text>
-      <Text style={{ fontSize: 18, color: "green" }}>$ {product.price}</Text>
-      <Text style={{ fontSize: 16, marginVertical: 10 }}>
+      <Text style={{ fontSize: 20, color: "green" }}>$ {product.price}</Text>
+      <Text style={{ fontSize: 18, marginVertical: 10 }}>
         {product.description}
       </Text>
 
@@ -182,9 +195,9 @@ export default function ProductDetailScreen() {
             borderRadius: 5,
             alignItems: "center",
           }}
-          // onPress={#}
+          onPress={addToCartHandler}
         >
-          <Text style={{ color: "white", fontWeight: "bold" }}>
+          <Text style={{ color: "white", fontWeight: "bold", fontSize: 18 }}>
             Add to Cart
           </Text>
         </TouchableOpacity>
@@ -193,7 +206,7 @@ export default function ProductDetailScreen() {
       )}
 
       <View>
-        <Text style={{ fontSize: 20, fontWeight: "bold", marginVertical: 10 }}>
+        <Text style={{ fontSize: 24, fontWeight: "bold", marginVertical: 10 }}>
           Reviews
         </Text>
 
@@ -208,7 +221,9 @@ export default function ProductDetailScreen() {
               style={{
                 borderColor: "gray",
                 borderWidth: 1,
-                padding: 6,
+                borderRadius: 10,
+                paddingVertical: 6,
+                paddingHorizontal: 10,
                 marginBottom: 10,
               }}
             >
@@ -228,7 +243,11 @@ export default function ProductDetailScreen() {
         <View>
           {userInfo ? (
             <View style={styles.container}>
-              <Text style={styles.title}>Leave a customer review</Text>
+              <Text
+                style={{ fontSize: 24, fontWeight: "bold", marginVertical: 10 }}
+              >
+                Leave a customer review
+              </Text>
               <Text style={styles.title}>Rating</Text>
               <SelectDropdown
                 data={data}
@@ -254,7 +273,6 @@ export default function ProductDetailScreen() {
                       ) : (
                         <Ionicons
                           name={"chevron-down"}
-                          color={"#ffc000"}
                           size={24}
                           style={styles.dropdownButtonArrowStyle}
                         />
@@ -282,6 +300,8 @@ export default function ProductDetailScreen() {
               <Text style={styles.title}>Comment</Text>
               <TextInput
                 style={styles.input}
+                multiline
+                numberOfLines={3}
                 value={comment}
                 placeholder="Comment"
                 onChangeText={setComment}
