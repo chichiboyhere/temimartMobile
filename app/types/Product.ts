@@ -1,11 +1,3 @@
-type Review = {
-  _id: string;
-  name: string;
-  rating: number;
-  createdAt: string;
-  comment: string;
-};
-
 export type Product = {
   _id: string;
   name: string;
@@ -17,6 +9,6 @@ export type Product = {
   countInStock: number;
   description: string;
   rating: number;
-  reviews: Review[];
+  reviews: any;
   numReviews: number;
 };

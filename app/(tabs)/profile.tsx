@@ -20,12 +20,25 @@ export default function Profile() {
   const router = useRouter();
 
   const signoutHandler = () => {
-    dispatch({ type: "USER_SIGNOUT" });
-    AsyncStorage.removeItem("userInfo");
-    AsyncStorage.removeItem("cartItems");
-    AsyncStorage.removeItem("shippingAddress");
-    AsyncStorage.removeItem("paymentMethod");
-    Alert.alert("Logged Out", "You're logged out. Come back soon.");
+    Alert.alert(
+      "Confirm Logout",
+      "Are you sure you want to logout? Awwn, we'll miss you o!",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Logout",
+          onPress: () => {
+            dispatch({ type: "USER_SIGNOUT" });
+            AsyncStorage.removeItem("userInfo");
+            AsyncStorage.removeItem("cartItems");
+            AsyncStorage.removeItem("shippingAddress");
+            AsyncStorage.removeItem("paymentMethod");
+            Alert.alert("Logged Out", "You're logged out. Come back soon.");
+          },
+        },
+      ]
+    );
+
     router.navigate("/");
   };
 
@@ -38,6 +51,13 @@ export default function Profile() {
             <Text style={styles.welcome}>
               Welcome {userInfo.name} &nbsp;({userInfo.email})
             </Text>
+
+            <TouchableOpacity style={styles.historyLink}>
+              <Text style={{ color: "white" }}>
+                <Link href="/orderHistory">Order History</Link>
+              </Text>
+            </TouchableOpacity>
+
             <TouchableOpacity
               onPress={signoutHandler}
               style={styles.buttonLogout}
@@ -170,5 +190,15 @@ const styles = StyleSheet.create({
     display: "flex",
     flexDirection: "column",
     gap: 10,
+  },
+  historyLink: {
+    backgroundColor: "green",
+    width: "90%",
+    borderRadius: 12,
+    padding: 12,
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 12,
   },
 });

@@ -18,6 +18,7 @@ export default function Shipping() {
   const [postalCode, setPostalCode] = useState(
     shippingAddress.postalCode || ""
   );
+  const [country, setCountry] = useState(shippingAddress.country || "");
 
   useEffect(() => {
     if (!userInfo) {
@@ -26,11 +27,9 @@ export default function Shipping() {
     router.navigate("/shipping");
   }, [userInfo, router]);
 
-  const [country, setCountry] = useState(shippingAddress.country || "");
-
   const submitHandler = async () => {
     if (!fullName || !address || !city || !postalCode || !country) {
-      Alert.alert("Error", "Please fill in all the fields");
+      Alert.alert("Error", "Please fill out all the fields");
       return;
     }
     ctxDispatch({

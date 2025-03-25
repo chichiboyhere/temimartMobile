@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import Rating from "../../components/Rating";
+import { useGetProductsQuery } from "@/hooks/productHooks";
 import {
   View,
   Text,
@@ -12,42 +13,32 @@ import {
   ScrollView,
   TextInput,
 } from "react-native";
-import axios from "axios";
 
-const API_URL = "https://temimartapi.onrender.com/api/products";
+import { ApiError } from "../types/ApiError";
+import { getError } from "../utils";
 
 export default function Index() {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { data: products, isLoading, error } = useGetProductsQuery();
   const [searchQuery, setSearchQuery] = useState<string>("");
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const { data } = await axios.get(API_URL);
-        setProducts(data);
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching products:", error);
-        setLoading(false);
-      }
-    };
-    fetchProducts();
-  }, []);
+  // useEffect(() => {
+  //   products!.forEach((product) => {
+  //     Image.prefetch(product.image);
+  //   });
+  // }, [products]);
 
-  useEffect(() => {
-    products.forEach((product) => {
-      Image.prefetch(product.image);
-    });
-  }, [products]);
-
-  if (loading) {
-    return <ActivityIndicator size="large" color="#0000ff" />;
-  }
   const filteredProducts = (products || []).filter((product) =>
     product.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
-  return (
+  return isLoading ? (
+    <ActivityIndicator
+      size="large"
+      color="#0000ff"
+      style={{ marginTop: 200 }}
+    />
+  ) : error ? (
+    <View> {getError(error as ApiError)}</View>
+  ) : (
     <View style={{ flex: 1 }}>
       <View
         style={{

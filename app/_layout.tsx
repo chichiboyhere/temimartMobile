@@ -13,7 +13,7 @@ export default function RootLayout() {
         <Stack
           screenOptions={{
             headerStyle: {
-              backgroundColor: "#0A5C36",
+              backgroundColor: "#ff9900",
             },
             headerTintColor: "#fff",
             headerTitleStyle: {
@@ -33,7 +33,11 @@ export default function RootLayout() {
           <Stack.Screen name="order" options={{ title: "Order" }} />
           <Stack.Screen
             name="orderDetail/[id]"
-            options={{ headerShown: false }}
+            options={{ title: "Order Detail" }}
+          />
+          <Stack.Screen
+            name="orderHistory"
+            options={{ title: "Order History" }}
           />
         </Stack>
         <StatusBar style="light" />

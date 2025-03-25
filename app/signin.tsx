@@ -6,6 +6,7 @@ import {
   Text,
   Alert,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 import styles from "../constants/styles";
 import { Store } from "@/Store";
@@ -72,7 +73,7 @@ const Signin = () => {
           &nbsp;instead
         </Link>
       </Text>
-      {isLoading && <Text>...loading</Text>}
+      {isLoading && <ActivityIndicator size="large" color="#0000ff" />}
     </View>
   );
 };

@@ -1,5 +1,12 @@
 import React, { useState, useContext } from "react";
-import { View, TextInput, Button, Text, Alert } from "react-native";
+import {
+  View,
+  TextInput,
+  Button,
+  Text,
+  Alert,
+  ActivityIndicator,
+} from "react-native";
 import styles from "../constants/styles";
 import { Store } from "@/Store";
 import { Link, useRouter } from "expo-router";
@@ -73,7 +80,7 @@ const Signup = () => {
         onChangeText={setConfirmPassword}
       />
       <Button disabled={isLoading} title="Submit" onPress={submit} />
-      {isLoading && <Text>...loading</Text>}
+      {isLoading && <ActivityIndicator size="large" color="#0000ff" />}
       <Text>
         Already a member?{" "}
         <Link href="/signin">

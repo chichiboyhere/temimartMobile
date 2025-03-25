@@ -10,6 +10,7 @@ import {
 import { Store } from "@/Store";
 import axios from "axios";
 import { Link, useRouter } from "expo-router";
+import { Product } from "../types/Product";
 
 const Cart = () => {
   const { state, dispatch: ctxDispatch } = useContext(Store);
@@ -29,11 +30,11 @@ const Cart = () => {
 
   const router = useRouter();
 
-  const handleUpdateQuantity = async (item, quantity) => {
-    const { data } = await axios.get(
-      `https://temimartapi.onrender.com/api/products/${item._id}`
-    );
-    if (data.countInStock < quantity) {
+  const handleUpdateQuantity = (item: Product, quantity: number) => {
+    // const { data } = await axios.get(
+    //   `https://temimartapi.onrender.com/api/products/${item._id}`
+    // );
+    if (item.countInStock < quantity) {
       Alert.alert(
         "Stock Limit",
         "You have reached the maximum stock available."
@@ -47,11 +48,6 @@ const Cart = () => {
     if (quantity === 0) {
       ctxDispatch({ type: "CART_REMOVE_ITEM", payload: item });
     }
-  };
-
-  const handleRemoveItem = (item) => {
-    ctxDispatch({ type: "CART_REMOVE_ITEM", payload: item });
-    Alert.alert("Removed", "Item has been removed from the cart.");
   };
 
   const handleCheckout = () => {
@@ -76,7 +72,6 @@ const Cart = () => {
         <>
           <FlatList
             data={cartItems}
-            // keyExtractor={(item) => item._id}
             keyExtractor={(item, index) =>
               item._id ? item._id.toString() : index.toString()
             }
@@ -150,14 +145,6 @@ const Cart = () => {
                       <Text>+</Text>
                     </TouchableOpacity>
                   </View>
-
-                  {/* Remove Button */}
-                  {/* <TouchableOpacity
-                    onPress={() => handleRemoveItem(item)}
-                    style={{ marginTop: 5 }}
-                  >
-                    <Text style={{ color: "red" }}>Remove</Text>
-                  </TouchableOpacity> */}
                 </View>
               </View>
             )}

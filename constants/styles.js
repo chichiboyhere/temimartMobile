@@ -110,13 +110,13 @@ const styles = StyleSheet.create({
   resultDisplay: {
     display: "flex",
     flexDirection: "row",
-    paddingHorizontal: 3,
   },
   resultDisplayItem: {
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderWidth: 1,
     borderColor: "gray",
+    width: 110,
   },
   resultDisplayText: {
     color: "black",
