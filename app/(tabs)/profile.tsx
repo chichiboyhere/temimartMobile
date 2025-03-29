@@ -53,7 +53,9 @@ export default function Profile() {
             </Text>
 
             <TouchableOpacity style={styles.historyLink}>
-              <Text style={{ color: "white" }}>
+              <Text
+                style={{ color: "white", fontSize: 18, fontWeight: "bold" }}
+              >
                 <Link href="/orderHistory">Order History</Link>
               </Text>
             </TouchableOpacity>
@@ -163,13 +165,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   buttonLogout: {
-    width: "80%",
+    width: 280,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "red",
     paddingHorizontal: 20,
     borderRadius: 10,
-    paddingVertical: 10,
+    paddingVertical: 12,
   },
   logoutText: {
     color: "white",
@@ -193,9 +195,11 @@ const styles = StyleSheet.create({
   },
   historyLink: {
     backgroundColor: "green",
-    width: "90%",
-    borderRadius: 12,
-    padding: 12,
+    width: 280,
+
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    paddingVertical: 12,
     display: "flex",
     justifyContent: "center",
     alignItems: "center",

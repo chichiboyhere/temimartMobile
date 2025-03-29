@@ -34,10 +34,9 @@ export default function About() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#25292e",
-    justifyContent: "center",
-    alignItems: "center",
     padding: 15,
+    backgroundColor: "#25292e",
+    minHeight: 800,
   },
   text: {
     color: "#fff",
@@ -59,7 +58,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   copyContainer: {
-    marginTop: 20,
+    marginBottom: 10,
   },
   copyright: {
     fontSize: 13,

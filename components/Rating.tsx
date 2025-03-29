@@ -10,43 +10,43 @@ function Rating(props: {
   return (
     <View style={{ display: "flex", flexDirection: "row" }}>
       {rating >= 1 ? (
-        <Ionicons name={"star-sharp"} color={"#ffc000"} size={24} />
+        <Ionicons name={"star-sharp"} color={"#ffc000"} size={18} />
       ) : rating >= 0.5 ? (
-        <Ionicons name={"star-half-outline"} color={"#ffc000"} size={24} />
+        <Ionicons name={"star-half-outline"} color={"#ffc000"} size={18} />
       ) : (
-        <Ionicons name={"star-outline"} color={"#ffc000"} size={24} />
+        <Ionicons name={"star-outline"} color={"#ffc000"} size={18} />
       )}
 
       {rating >= 2 ? (
-        <Ionicons name={"star-sharp"} color={"#ffc000"} size={24} />
+        <Ionicons name={"star-sharp"} color={"#ffc000"} size={18} />
       ) : rating >= 1.5 ? (
-        <Ionicons name={"star-half-outline"} color={"#ffc000"} size={24} />
+        <Ionicons name={"star-half-outline"} color={"#ffc000"} size={18} />
       ) : (
-        <Ionicons name={"star-outline"} color={"#ffc000"} size={24} />
+        <Ionicons name={"star-outline"} color={"#ffc000"} size={18} />
       )}
 
       {rating >= 3 ? (
-        <Ionicons name={"star-sharp"} color={"#ffc000"} size={24} />
+        <Ionicons name={"star-sharp"} color={"#ffc000"} size={18} />
       ) : rating >= 2.5 ? (
-        <Ionicons name={"star-half-outline"} color={"#ffc000"} size={24} />
+        <Ionicons name={"star-half-outline"} color={"#ffc000"} size={18} />
       ) : (
-        <Ionicons name={"star-outline"} color={"#ffc000"} size={24} />
+        <Ionicons name={"star-outline"} color={"#ffc000"} size={18} />
       )}
 
       {rating >= 4 ? (
-        <Ionicons name={"star-sharp"} color={"#ffc000"} size={24} />
+        <Ionicons name={"star-sharp"} color={"#ffc000"} size={18} />
       ) : rating >= 3.5 ? (
-        <Ionicons name={"star-half-outline"} color={"#ffc000"} size={24} />
+        <Ionicons name={"star-half-outline"} color={"#ffc000"} size={18} />
       ) : (
-        <Ionicons name={"star-outline"} color={"#ffc000"} size={24} />
+        <Ionicons name={"star-outline"} color={"#ffc000"} size={18} />
       )}
 
       {rating >= 5 ? (
-        <Ionicons name={"star-sharp"} color={"#ffc000"} size={24} />
+        <Ionicons name={"star-sharp"} color={"#ffc000"} size={18} />
       ) : rating >= 4.5 ? (
-        <Ionicons name={"star-half-outline"} color={"#ffc000"} size={24} />
+        <Ionicons name={"star-half-outline"} color={"#ffc000"} size={18} />
       ) : (
-        <Ionicons name={"star-outline"} color={"#ffc000"} size={24} />
+        <Ionicons name={"star-outline"} color={"#ffc000"} size={18} />
       )}
 
       {caption ? (
