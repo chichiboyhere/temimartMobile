@@ -1,4 +1,4 @@
-import React, { useContext, useReducer, useEffect, useState } from "react";
+import React, { useContext } from "react";
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Alert,
   ScrollView,
   ActivityIndicator,
+  TouchableOpacity,
 } from "react-native";
 
 import { Store } from "@/Store";
@@ -33,24 +34,10 @@ const OrderConfirmation = () => {
   } = useGetOrderDetailsQuery(orderId as string);
 
   async function deliverOrderHandler() {
-    //   try {
-    //     dispatch({ type: "DELIVER_REQUEST" });
-    //     const { data } = await axios.put(
-    //       `https://temimartapi.onrender.com/api/orders/${order._id}/deliver`,
-    //       {},
-    //       {
-    //         headers: { authorization: `Bearer ${userInfo.token}` },
-    //       }
-    //     );
-    //     dispatch({ type: "DELIVER_SUCCESS", payload: data });
-    //     Alert.alert("Order Delivered", "Order is delivered");
-    //   } catch (err) {
-    //     console.log(err);
-    //     dispatch({ type: "DELIVER_FAIL" });
-    //   }
     //todo
   }
-  function dateFormat(dateTime) {
+
+  function dateFormat(dateTime: string | number | Date): string {
     return new Date(dateTime).toLocaleString("en-US", {
       day: "numeric",
       month: "long",
@@ -252,6 +239,54 @@ const OrderConfirmation = () => {
               </View>
             )}
           </View>
+
+          <View
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              justifyContent: "center",
+              alignItems: "center",
+              gap: 10,
+            }}
+          >
+            <TouchableOpacity
+              style={{
+                backgroundColor: "green",
+                width: "45%",
+                borderRadius: 12,
+                padding: 12,
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                marginBottom: 12,
+              }}
+            >
+              <Link href="/orderHistory">
+                <Text style={{ color: "white", fontWeight: "700" }}>
+                  See Your Orders
+                </Text>
+              </Link>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={{
+                backgroundColor: "blue",
+                width: "45%",
+                borderRadius: 12,
+                padding: 12,
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                marginBottom: 12,
+              }}
+            >
+              <Link href="/">
+                <Text style={{ color: "white", fontWeight: "700" }}>
+                  shopping page
+                </Text>
+              </Link>
+            </TouchableOpacity>
+          </View>
+
           {userInfo!.isAdmin && order.isPaid && !order.isDelivered && (
             <View>
               <Button title=" Deliver Order" onPress={deliverOrderHandler} />

@@ -8,21 +8,22 @@ import {
   ActivityIndicator,
   Alert,
   TextInput,
+  StyleSheet,
 } from "react-native";
 
 import axios from "axios";
 import { Product } from "./types/Product";
-import { Link, useRouter } from "expo-router";
+import { Link, useRouter, useLocalSearchParams } from "expo-router";
 import { RouteProp, useRoute } from "@react-navigation/native";
 import { Store } from "@/Store";
-import styles from "@/constants/styles";
-import { getError } from "../utils";
+
 import ReviewFormat from "@/components/ReviewFormat";
 import SelectDropdown from "react-native-select-dropdown";
 import { useGetProductDetailsBySlugQuery } from "@/hooks/productHooks";
 
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { ApiError } from "./types/ApiError";
+import { getError } from "../utils";
 
 type Action =
   | { type: "REFRESH_PRODUCT"; payload: Product }
@@ -30,43 +31,38 @@ type Action =
   | { type: "CREATE_SUCCESS" }
   | { type: "CREATE_FAIL"; payload: string };
 
-const reducer = (state, action: Action) => {
+const reducer = (state: any, action: Action) => {
   switch (action.type) {
     case "REFRESH_PRODUCT":
       return { ...state, product: action.payload };
-    // case "CREATE_REQUEST":
-    //   return { ...state, loadingCreateReview: true };
-    // case "CREATE_SUCCESS":
-    //   return { ...state, loadingCreateReview: false };
-    // case "CREATE_FAIL":
-    //   return { ...state, loadingCreateReview: false };
+    case "CREATE_SUCCESS":
+      return { ...state, loadingCreateReview: false };
+    case "CREATE_FAIL":
+      return { ...state, loadingCreateReview: false };
     default:
       return state;
   }
 };
 
-type ProductDetailRouteProp = RouteProp<
-  { ProductDetail: { productId: string } },
-  "ProductDetail"
->;
+// type ProductDetailRouteProp = RouteProp<
+//   { ProductDetail: { productId: string } },
+//   "ProductDetail"
+// >;
 
 export default function ProductDetailScreen() {
   const { state, dispatch: ctxDispatch } = useContext(Store);
   const { cart, userInfo } = state;
 
-  const route = useRoute<ProductDetailRouteProp>();
+  //const route = useRoute<ProductDetailRouteProp>();
 
-  let updatedProduct;
-  //const { slug: slug } = useLocalSearchParams();
-  useEffect(() => {
-    dispatch({ type: "REFRESH_PRODUCT", payload: updatedProduct });
-  }, [updatedProduct]);
-  const { slug } = route.params;
+  const { slug } = useLocalSearchParams();
+
+  //const { slug  } = route.params;
   const {
     data: product,
     isLoading,
     error,
-  } = useGetProductDetailsBySlugQuery(slug);
+  } = useGetProductDetailsBySlugQuery(slug as string);
 
   const router = useRouter();
 
@@ -86,19 +82,13 @@ export default function ProductDetailScreen() {
     loading: true,
     error: "",
   });
-  // const initialState: State = {
-  //   isLoading: false,
-  //   error: null,
-  // };
-
-  // const [state, dispatch] = useReducer(reducer, initialState);
 
   if (isLoading) {
     return (
       <ActivityIndicator
         size="large"
         color="#0000ff"
-        style={{ marginTop: 50 }}
+        style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
       />
     );
   }
@@ -147,15 +137,14 @@ export default function ProductDetailScreen() {
       product.reviews.unshift(data.review);
       product.numReviews = data.numReviews;
       product.rating = data.rating;
-      console.log(data.review._id);
+
       Alert.alert("Success", "Review submitted successfully");
 
       dispatch({ type: "REFRESH_PRODUCT", payload: product });
     } catch (err) {
       if (err instanceof Error) {
-        console.log(err.message);
         Alert.alert("Not allowed!", getError(err));
-        dispatch({ type: "CREATE_FAIL" });
+        dispatch({ type: "CREATE_FAIL", payload: getError(err) });
       }
     }
   };
@@ -269,7 +258,6 @@ export default function ProductDetailScreen() {
               <SelectDropdown
                 data={data}
                 onSelect={(selectedItem, index) => {
-                  console.log(selectedItem, index);
                   setRating(index + 1);
                 }}
                 renderButton={(selectedItem, isOpened) => {
@@ -349,12 +337,116 @@ export default function ProductDetailScreen() {
               )}
             </View>
           ) : (
-            <Text style={{ marginBottom: 15 }}>
-              <Link href="/signin">Sign in to leave a review</Link>
-            </Text>
+            <View
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                marginBottom: 25,
+              }}
+            >
+              <Text
+                style={{
+                  color: "blue",
+                  textDecorationLine: "underline",
+                  fontWeight: "bold",
+                  fontSize: 18,
+                }}
+              >
+                <Link href="/signin">Sign in </Link>
+              </Text>
+              <Text
+                style={{
+                  fontSize: 18,
+                }}
+              >
+                to leave a review
+              </Text>
+            </View>
           )}
         </View>
       </View>
     </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  input: {
+    borderWidth: 3,
+    borderColor: "#ccc",
+    borderRadius: 10,
+    padding: 10,
+    marginRight: 10,
+    fontSize: 16,
+    marginBottom: 8,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: "bold",
+  },
+  saveButton: {
+    backgroundColor: "green",
+    width: "45%",
+    borderRadius: 12,
+    padding: 12,
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+
+  cancelButton: {
+    backgroundColor: "red",
+    width: "45%",
+    borderRadius: 12,
+    padding: 12,
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  dropdownButtonStyle: {
+    width: 200,
+    height: 50,
+    backgroundColor: "#E9ECEF",
+    borderRadius: 12,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 12,
+  },
+  dropdownButtonTxtStyle: {
+    flex: 1,
+    fontSize: 18,
+    fontWeight: "500",
+    color: "#151E26",
+  },
+  dropdownButtonArrowStyle: {
+    fontSize: 28,
+  },
+  dropdownButtonIconStyle: {
+    fontSize: 28,
+    marginRight: 8,
+  },
+  dropdownMenuStyle: {
+    backgroundColor: "#E9ECEF",
+    borderRadius: 8,
+  },
+  dropdownItemStyle: {
+    width: "100%",
+    flexDirection: "row",
+    paddingHorizontal: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 8,
+  },
+  dropdownItemTxtStyle: {
+    flex: 1,
+    fontSize: 18,
+    fontWeight: "500",
+    color: "#151E26",
+  },
+  dropdownItemIconStyle: {
+    fontSize: 28,
+    marginRight: 8,
+  },
+});

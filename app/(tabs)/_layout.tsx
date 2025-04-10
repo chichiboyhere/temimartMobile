@@ -17,6 +17,7 @@ export default function TabLayout() {
         const count = cart.cartItems.reduce((a, c) => a + c.quantity, 0);
         setCartItemsCount(count);
       }
+      if (cart.cartItems.length === 0) setCartItemsCount(0);
     };
 
     calcCartItems();
@@ -25,22 +26,22 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: "#ffd33d",
+        tabBarActiveTintColor: "#318CE7",
         headerStyle: {
-          backgroundColor: "#0A5C36",
+          backgroundColor: "#ff9900",
           height: 120,
         },
         headerShadowVisible: false,
         headerTintColor: "#fff",
         tabBarStyle: {
-          backgroundColor: "#25292e",
+          backgroundColor: "#FAF9F6",
         },
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: "Products",
+          title: "All Products",
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? "home-sharp" : "home-outline"}

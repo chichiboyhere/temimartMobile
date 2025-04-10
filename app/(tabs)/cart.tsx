@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from "react";
+import React, { useContext } from "react";
 import {
   View,
   Text,
@@ -8,9 +8,9 @@ import {
   Alert,
 } from "react-native";
 import { Store } from "@/Store";
-import axios from "axios";
+
 import { Link, useRouter } from "expo-router";
-import { Product } from "../types/Product";
+import { CartItem } from "@/types/Cart";
 
 const Cart = () => {
   const { state, dispatch: ctxDispatch } = useContext(Store);
@@ -19,9 +19,6 @@ const Cart = () => {
     userInfo,
   } = state;
 
-  useEffect(() => {
-    console.log(cartItems.map((item) => item._id));
-  }, []);
   const getTotalPrice = () => {
     return cartItems
       .reduce((total, item) => total + item.price * item.quantity, 0)
@@ -30,10 +27,7 @@ const Cart = () => {
 
   const router = useRouter();
 
-  const handleUpdateQuantity = (item: Product, quantity: number) => {
-    // const { data } = await axios.get(
-    //   `https://temimartapi.onrender.com/api/products/${item._id}`
-    // );
+  const handleUpdateQuantity = (item: CartItem, quantity: number) => {
     if (item.countInStock < quantity) {
       Alert.alert(
         "Stock Limit",

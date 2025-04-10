@@ -2,12 +2,11 @@ import {
   Text,
   View,
   StyleSheet,
-  Image,
   ScrollView,
   TouchableOpacity,
   Alert,
 } from "react-native";
-import { useEffect, useState, useContext } from "react";
+import { useContext } from "react";
 import { Link, useRouter } from "expo-router";
 import { Store } from "@/Store";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -47,7 +46,7 @@ export default function Profile() {
       <View style={styles.container}>
         {userInfo ? (
           <View style={styles.profile}>
-            <Ionicons name={"person"} size={200} color={"white"} />
+            <Ionicons name={"person"} size={200} color={"gray"} />
             <Text style={styles.welcome}>
               Welcome {userInfo.name} &nbsp;({userInfo.email})
             </Text>
@@ -78,7 +77,7 @@ export default function Profile() {
               }}
             >
               <Text
-                style={{ color: "white", fontSize: 18, fontWeight: "bold" }}
+                style={{ color: "#318CE7", fontSize: 18, fontWeight: "bold" }}
               >
                 Member?
               </Text>
@@ -97,7 +96,7 @@ export default function Profile() {
               }}
             >
               <Text
-                style={{ color: "white", fontSize: 18, fontWeight: "bold" }}
+                style={{ color: "#318CE7", fontSize: 18, fontWeight: "bold" }}
               >
                 Not a member yet?
               </Text>
@@ -119,7 +118,7 @@ export default function Profile() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#25292e",
+    // backgroundColor: "#25292e",
     justifyContent: "center",
     alignItems: "center",
     padding: 15,
@@ -154,7 +153,7 @@ const styles = StyleSheet.create({
     color: "white",
   },
   signinButton: {
-    backgroundColor: "green",
+    backgroundColor: "#318CE7",
     padding: 4,
     color: "white",
     borderRadius: 4,
@@ -179,8 +178,9 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   welcome: {
-    color: "white",
     marginVertical: 10,
+    fontSize: 17,
+    fontWeight: "700",
   },
   profile: {
     display: "flex",

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Link } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import Rating from "../../components/Rating";
@@ -10,7 +10,6 @@ import {
   Image,
   TouchableOpacity,
   ActivityIndicator,
-  ScrollView,
   TextInput,
 } from "react-native";
 
@@ -21,12 +20,6 @@ export default function Index() {
   const { data: products, isLoading, error } = useGetProductsQuery();
   const [searchQuery, setSearchQuery] = useState<string>("");
 
-  // useEffect(() => {
-  //   products!.forEach((product) => {
-  //     Image.prefetch(product.image);
-  //   });
-  // }, [products]);
-
   const filteredProducts = (products || []).filter((product) =>
     product.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -34,15 +27,24 @@ export default function Index() {
     <ActivityIndicator
       size="large"
       color="#0000ff"
-      style={{ marginTop: 200 }}
+      style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
     />
   ) : error ? (
-    <View> {getError(error as ApiError)}</View>
+    <View
+      style={{
+        flex: 1,
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      {" "}
+      <Text>{getError(error as ApiError)}</Text>
+    </View>
   ) : (
     <View style={{ flex: 1 }}>
       <View
         style={{
-          backgroundColor: "#0A5C36",
+          backgroundColor: "#ff9900",
           marginBottom: 10,
           padding: 10,
           position: "relative",
@@ -59,7 +61,7 @@ export default function Index() {
           style={{
             backgroundColor: "white",
             width: "80%",
-            height: 30,
+            height: 35,
             borderRadius: 15,
             paddingLeft: 30,
           }}

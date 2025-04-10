@@ -1,8 +1,15 @@
-import { Text, View, Button, ScrollView, TextInput, Alert } from "react-native";
+import {
+  Text,
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  TextInput,
+  Alert,
+} from "react-native";
 import { useEffect, useState, useContext } from "react";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import styles from "@/constants/styles";
+//import styles from "@/constants/styles";
 import { Store } from "@/Store";
 
 export default function Shipping() {
@@ -84,7 +91,75 @@ export default function Shipping() {
         value={country}
         onChangeText={setCountry}
       />
-      <Button title="Continue" onPress={submitHandler} />
+
+      <TouchableOpacity
+        style={{
+          backgroundColor: "#ff9900",
+          padding: 15,
+          borderRadius: 5,
+          alignItems: "center",
+        }}
+        onPress={submitHandler}
+        // disabled={isLoading}
+      >
+        <Text
+          style={{
+            color: "white",
+            fontWeight: "bold",
+            fontSize: 18,
+          }}
+        >
+          Continue
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    padding: 10,
+    marginVertical: 10,
+  },
+
+  input: {
+    borderWidth: 3,
+    borderColor: "#ccc",
+    borderRadius: 10,
+    padding: 10,
+    marginRight: 10,
+    fontSize: 16,
+    marginBottom: 8,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: "bold",
+  },
+  subTitle: {
+    fontSize: 16,
+    fontWeight: 700,
+    marginVertical: 10,
+  },
+  inputField: {
+    marginBottom: 8,
+  },
+  timeInputContainer: {
+    display: "flex",
+    flexDirection: "row",
+    marginHorizontal: 2,
+    gap: 15,
+  },
+  timeInput: {
+    borderWidth: 3,
+    borderColor: "#ccc",
+    borderRadius: 10,
+    padding: 10,
+    fontSize: 16,
+    marginBottom: 8,
+    width: "45%",
+  },
+  text: {
+    fontWeight: "bold",
+    marginBottom: 4,
+  },
+});

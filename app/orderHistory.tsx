@@ -2,16 +2,12 @@ import {
   View,
   Text,
   FlatList,
-  Image,
   TouchableOpacity,
-  StyleSheet,
-  Alert,
   ScrollView,
   ActivityIndicator,
+  StyleSheet,
 } from "react-native";
 import { useRouter, Link } from "expo-router";
-
-import styles from "@/constants/styles";
 
 import { useGetOrderHistoryQuery } from "../hooks/orderHooks";
 import { ApiError } from "../types/ApiError";
@@ -22,14 +18,28 @@ export default function OrderHistory() {
   const router = useRouter();
 
   return isLoading ? (
-    <ActivityIndicator size="large" color="#0000ff" />
+    <ActivityIndicator
+      size="large"
+      color="#0000ff"
+      style={{
+        flex: 1,
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    />
   ) : error ? (
-    <View>{getError(error as ApiError)}</View>
-  ) : orders?.length == 0 ? (
     <View>
-      <Text style={{ textAlign: "center", marginTop: 300, fontSize: 20 }}>
-        You have not made any orders yet!
-      </Text>
+      <Text>{getError(error as ApiError)}</Text>
+    </View>
+  ) : orders?.length == 0 ? (
+    <View
+      style={{
+        flex: 1,
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <Text style={{ fontSize: 20 }}>You have not made any orders yet!</Text>
     </View>
   ) : (
     <ScrollView style={{ flex: 1, margin: 10 }} nestedScrollEnabled={true}>
@@ -101,3 +111,30 @@ export default function OrderHistory() {
     </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  repaymentText: {
+    fontWeight: "bold",
+  },
+  resultHeader: {
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 6,
+  },
+
+  resultDisplay: {
+    display: "flex",
+    flexDirection: "row",
+  },
+  resultDisplayItem: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: "gray",
+    width: 110,
+  },
+  resultDisplayText: {
+    color: "black",
+  },
+});

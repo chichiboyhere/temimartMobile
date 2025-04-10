@@ -11,75 +11,22 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Link } from "expo-router";
-import axios from "axios";
+
 import { Store } from "@/Store";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRoute } from "@react-navigation/native";
 import { useRouter } from "expo-router";
-import { Order } from "./types/Order";
+
 import { useCreateOrderMutation } from "./hooks/orderHooks";
 import { getError } from "./utils";
 import { ApiError } from "./types/ApiError";
-
-// type Action =
-//   | { type: "CREATE_REQUEST" }
-//   | { type: "CREATE_SUCCESS" }
-//   | { type: "CREATE_FAIL" };
-
-// const reducer = (state, action: Action) => {
-//   switch (action.type) {
-//     case "CREATE_REQUEST":
-//       return { ...state, loading: true };
-//     case "CREATE_SUCCESS":
-//       return { ...state, loading: false };
-//     case "CREATE_FAIL":
-//       return { ...state, loading: false };
-//     default:
-//       return state;
-//   }
-// };
 
 const OrdersScreen = () => {
   const route = useRoute();
   const router = useRouter();
   const { mutateAsync: createOrder, isLoading } = useCreateOrderMutation();
   const { state, dispatch } = useContext(Store);
-  const { cart, userInfo } = state;
-
-  // const [{ loading }, dispatch] = useReducer(reducer, {
-  //   loading: false,
-  // });
-  // const placeOrderHandler = async () => {
-  //   try {
-  //     dispatch({ type: "CREATE_REQUEST" });
-
-  //     const { data } = await axios.post(
-  //       "https://temimartapi.onrender.com/api/orders",
-  //       {
-  //         orderItems: cart.cartItems,
-  //         shippingAddress: cart.shippingAddress,
-  //         paymentMethod: cart.paymentMethod,
-  //         itemsPrice: cart.itemsPrice,
-  //         shippingPrice: cart.shippingPrice,
-  //         taxPrice: cart.taxPrice,
-  //         totalPrice: cart.totalPrice,
-  //       },
-  //       {
-  //         headers: {
-  //           authorization: `Bearer ${userInfo.token}`,
-  //         },
-  //       }
-  //     );
-
-  //     dispatch({ type: "CREATE_SUCCESS" });
-  //     await AsyncStorage.removeItem("cartItems");
-  //     Alert.alert("Order Placed", "Order Successfully placed");
-  //     router.navigate(`/orderDetail/${data.order._id}`);
-  //   } catch (err) {
-  //     dispatch({ type: "CREATE_FAIL" });
-  //     console.log(err);
-  //   }
-  // };
+  const { cart } = state;
 
   const placeOrderHandler = async () => {
     try {

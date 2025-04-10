@@ -22,10 +22,9 @@ export default function About() {
           The Temimart is an online shopping mart, where all sorts of household
           convieniences are sold
         </Text>
-
-        <View style={styles.copyContainer}>
-          <Text style={styles.copyright}>&copy;{year}</Text>
-        </View>
+      </View>
+      <View style={styles.copyContainer}>
+        <Text style={styles.copyright}>&copy;{year}</Text>
       </View>
     </ScrollView>
   );
@@ -35,28 +34,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 15,
-    backgroundColor: "#25292e",
+    // backgroundColor: "#25292e",
     minHeight: 800,
   },
   text: {
-    color: "#fff",
+    color: "gray",
+    fontWeight: "500",
     fontSize: 17,
   },
 
-  list: {
-    color: "white",
-    fontSize: 16,
-    marginTop: 15,
-    width: "90%",
-  },
-  image: {
-    width: 320,
-    height: 440,
-    borderRadius: 18,
-    borderWidth: 2,
-    borderColor: "white",
-    marginBottom: 10,
-  },
   copyContainer: {
     marginBottom: 10,
   },
@@ -64,6 +50,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "bold",
     textAlign: "center",
-    color: "white",
+    color: "gray",
   },
 });

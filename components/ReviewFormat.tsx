@@ -9,13 +9,18 @@ import {
 } from "react-native";
 import Rating from "./Rating";
 import { Product } from "@/types/Product";
-
+import { Review } from "@/app/types/Review";
 import axios from "axios";
 import { Store } from "@/Store";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import SelectDropdown from "react-native-select-dropdown";
-import styles from "@/constants/styles";
 import { getError } from "@/utils";
+import { useGetProductByIdQuery } from "@/app/hooks/productHooks";
+
+interface ReviewFormatProps {
+  item: Review;
+  product: Product;
+}
 
 type Action =
   | { type: "REFRESH_PRODUCT"; payload: Product }
@@ -23,7 +28,7 @@ type Action =
   | { type: "CREATE_SUCCESS" }
   | { type: "CREATE_FAIL"; payload: string };
 
-const reducer = (state, action: Action) => {
+const reducer = (state: any, action: Action) => {
   switch (action.type) {
     case "REFRESH_PRODUCT":
       return { ...state, product: action.payload };
@@ -38,15 +43,19 @@ const reducer = (state, action: Action) => {
   }
 };
 
-function ReviewFormat({ item, product }) {
+function ReviewFormat({ item, product }: ReviewFormatProps) {
   const { state, dispatch: ctxDispatch } = useContext(Store);
   const { cart, userInfo } = state;
 
-  const [selectedReview, setSelectedReview] = useState(null);
-  const [reviewId, setReviewId] = useState(null);
+  const { data: updatedProduct } = useGetProductByIdQuery(
+    product._id as string
+  );
+
+  const [selectedReview, setSelectedReview] = useState<Review | null>(null);
+  const [reviewId, setReviewId] = useState<string | null>(null);
   const [editComment, setEditComment] = useState("");
   const [editRating, setEditRating] = useState(1);
-  const [forceRender, setForceRender] = useState(false);
+  //const [forceRender, setForceRender] = useState(false);
 
   const [{ loadingCreateReview }, dispatch] = useReducer(reducer, {
     product: {} as Product,
@@ -62,23 +71,15 @@ function ReviewFormat({ item, product }) {
     { title: "5 - Excellent" },
   ];
 
-  const handleEdit = (review) => {
+  const handleEdit = (review: Review) => {
     setSelectedReview(review);
     setReviewId(review._id);
-    console.log(review._id);
     setEditComment(review.comment);
     setEditRating(review.rating);
   };
 
   const saveEdit = async () => {
     try {
-      console.log({
-        rating: editRating,
-        comment: editComment,
-        name: userInfo?.name,
-        prodId: product._id,
-        revId: reviewId,
-      });
       const { data } = await axios.put(
         `https://temimartapi.onrender.com/api/products/${product._id}/reviews/${reviewId}`,
 
@@ -86,16 +87,21 @@ function ReviewFormat({ item, product }) {
         { headers: { Authorization: `Bearer ${userInfo!.token}` } }
       );
 
-      Alert.alert("Success", "Review updated successfully");
-      // dispatch({ type: "REFRESH_PRODUCT", payload: data.product });
-      // Instead of just dispatching, manually refetch the product
-      const { data: updatedProduct } = await axios.get(
-        `https://temimartapi.onrender.com/api/products/${product._id}`
-      );
+      dispatch({
+        type: "CREATE_SUCCESS",
+      });
+      if (!product.reviews) product.reviews = [];
+      product.reviews.push(data.review);
+      product.numReviews = data.numReviews;
+      product.rating = data.rating;
+      console.log(data.review);
+      Alert.alert("Success", data.message);
 
-      dispatch({ type: "REFRESH_PRODUCT", payload: updatedProduct });
+      dispatch({ type: "REFRESH_PRODUCT", payload: product });
+
+      // dispatch({ type: "REFRESH_PRODUCT", payload: updatedProduct });
       // Force re-render
-      setForceRender((prev) => !prev);
+      //setForceRender((prev) => !prev);
       setSelectedReview(null); // Exit edit mode
     } catch (err) {
       Alert.alert("Error!", getError(err));
@@ -118,7 +124,10 @@ function ReviewFormat({ item, product }) {
               );
 
               Alert.alert("Deleted", "Review deleted successfully");
-              dispatch({ type: "REFRESH_PRODUCT", payload: product });
+              dispatch({
+                type: "REFRESH_PRODUCT",
+                payload: updatedProduct as Product,
+              });
             } catch (err) {
               Alert.alert("Error", getError(err));
             }
@@ -130,7 +139,6 @@ function ReviewFormat({ item, product }) {
 
   return (
     <View
-      //   key={item._id}
       style={{
         borderColor: "gray",
         borderWidth: 1,
@@ -261,13 +269,13 @@ function ReviewFormat({ item, product }) {
                   gap: 10,
                 }}
               >
-                <TouchableOpacity style={stylez.saveButton} onPress={saveEdit}>
+                <TouchableOpacity style={styles.saveButton} onPress={saveEdit}>
                   <Text style={{ color: "white", fontWeight: "700" }}>
                     Save
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={stylez.cancelButton}
+                  style={styles.cancelButton}
                   onPress={() => setSelectedReview(null)}
                 >
                   <Text style={{ color: "white", fontWeight: "700" }}>
@@ -285,7 +293,11 @@ function ReviewFormat({ item, product }) {
 }
 export default ReviewFormat;
 
-const stylez = StyleSheet.create({
+const styles = StyleSheet.create({
+  title: {
+    fontSize: 20,
+    fontWeight: "bold",
+  },
   saveButton: {
     backgroundColor: "green",
     width: "45%",
@@ -306,5 +318,50 @@ const stylez = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 12,
+  },
+  dropdownButtonStyle: {
+    width: 200,
+    height: 50,
+    backgroundColor: "#E9ECEF",
+    borderRadius: 12,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 12,
+  },
+  dropdownButtonTxtStyle: {
+    flex: 1,
+    fontSize: 18,
+    fontWeight: "500",
+    color: "#151E26",
+  },
+  dropdownButtonArrowStyle: {
+    fontSize: 28,
+  },
+  dropdownButtonIconStyle: {
+    fontSize: 28,
+    marginRight: 8,
+  },
+  dropdownMenuStyle: {
+    backgroundColor: "#E9ECEF",
+    borderRadius: 8,
+  },
+  dropdownItemStyle: {
+    width: "100%",
+    flexDirection: "row",
+    paddingHorizontal: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 8,
+  },
+  dropdownItemTxtStyle: {
+    flex: 1,
+    fontSize: 18,
+    fontWeight: "500",
+    color: "#151E26",
+  },
+  dropdownItemIconStyle: {
+    fontSize: 28,
+    marginRight: 8,
   },
 });
