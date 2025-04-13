@@ -38,7 +38,7 @@ export default function Index() {
       }}
     >
       {" "}
-      <Text>{getError(error as ApiError)}</Text>
+      <Text>Error etching data</Text>
     </View>
   ) : (
     <View style={{ flex: 1 }}>

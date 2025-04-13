@@ -37,30 +37,30 @@ export const useEditPersonalReviewMutation = () =>
 //import apiClient from 'your-api-client-path'; // Adjust the import based on your project structure
 
 export const useCreateReviewMutation = (product: Product) => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (review: {
-      name: string;
-      rating: number;
-      comment: string;
-    }) => {
-      const response = await apiClient.post<{
-        message: string;
-        review: Review;
-      }>(`api/products/${product._id}/reviews`, review);
-      return response.data.review; // Return the new review
-    },
-    onError: (error) => console.error("Error posting review:", error),
-    onSuccess: (newReview) => {
-      // Update the cache directly
-      queryClient.setQueryData(["review", product._id], (oldData: Review[]) => {
-        return [...(oldData || []), newReview]; // Append the new review to the existing ones
-      });
-    },
-    networkMode: "online",
-    retry: 1,
-  });
+  // const queryClient = useQueryClient();
+  // return useMutation({
+  //   mutationFn: async (review: {
+  //     name: string;
+  //     rating: number;
+  //     comment: string;
+  //   }) => {
+  //     const response = await apiClient.post<{
+  //       message: string;
+  //       review: Review;
+  //     }>(`api/products/${product._id}/reviews`, review);
+  //     return response.data.review; // Return the new review
+  //   },
+  //   onError: (error) => console.error("Error posting review:", error),
+  //   onSuccess: (newReview) => {
+  //     // Update the cache directly
+  //     queryClient.setQueryData(["review", product._id], (oldData: Review[]) => {
+  //       return [...(oldData || []), newReview]; // Append the new review to the existing ones
+  //     });
+  //   },
+  //   networkMode: "online",
+  //   retry: 1,
+  // });
+  //todo
 };
 
 export const useGetReview = (productId: string, reviewId: string) => {
@@ -93,30 +93,32 @@ export const useGetReview = (productId: string, reviewId: string) => {
 
 export const useUpdateReviewMutation = () =>
   useMutation({
-    mutationFn: async (
-      review: {
-        reviewId: string;
-        name: string;
-        rating: number;
-        comment: string;
-      },
-      product: { productId: string }
-    ) =>
-      (
-        await apiClient.put<{
-          message: string;
-          product: Product;
-          review: Review;
-        }>(`api/products/${product.productId}/${review.reviewId}`, review)
-      ).data,
+    // mutationFn: async (
+    //   review: {
+    //     reviewId: string;
+    //     name: string;
+    //     rating: number;
+    //     comment: string;
+    //   },
+    //   product: { productId: string }
+    // ) =>
+    //   (
+    //     await apiClient.put<{
+    //       message: string;
+    //       product: Product;
+    //       review: Review;
+    //     }>(`api/products/${product.productId}/${review.reviewId}`, review)
+    //   ).data,
+    //todo
   });
 export const usePayOrderMutation = () =>
   useMutation({
-    mutationFn: async (details: { orderId: string }) =>
-      (
-        await apiClient.put<{ message: string; order: Order }>(
-          `api/orders/${details.orderId}/pay`,
-          details
-        )
-      ).data,
+    // mutationFn: async (details: { orderId: string }) =>
+    //   (
+    //     await apiClient.put<{ message: string; order: Order }>(
+    //       `api/orders/${details.orderId}/pay`,
+    //       details
+    //     )
+    //   ).data,
+    //todo
   });

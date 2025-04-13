@@ -215,6 +215,8 @@ const OrderConfirmation = () => {
                   paddingHorizontal: 6,
                   color: "white",
                   borderRadius: 10,
+                  marginTop: 10,
+                  marginBottom: 5,
                 }}
               >
                 Paid at {dateFormat(order.paidAt)}
@@ -298,7 +300,6 @@ const OrderConfirmation = () => {
   );
 };
 
-// Styles
 const styles = StyleSheet.create({
   button: {
     backgroundColor: "#ff9900",

@@ -44,8 +44,8 @@ const reducer = (state: any, action: Action) => {
 };
 
 function ReviewFormat({ item, product }: ReviewFormatProps) {
-  const { state, dispatch: ctxDispatch } = useContext(Store);
-  const { cart, userInfo } = state;
+  const { state } = useContext(Store);
+  const { userInfo } = state;
 
   const { data: updatedProduct } = useGetProductByIdQuery(
     product._id as string
@@ -78,36 +78,82 @@ function ReviewFormat({ item, product }: ReviewFormatProps) {
     setEditRating(review.rating);
   };
 
+  // const saveEdit = async () => {
+  //   try {
+  //     const { data } = await axios.put(
+  //       `https://temimartapi.onrender.com/api/products/${product._id}/reviews/${reviewId}`,
+
+  //       { rating: editRating, comment: editComment, name: userInfo?.name },
+  //       { headers: { Authorization: `Bearer ${userInfo!.token}` } }
+  //     );
+
+  //     dispatch({
+  //       type: "CREATE_SUCCESS",
+  //     });
+  //     if (!product.reviews) product.reviews = [];
+  //     product.reviews.push(data.review);
+  //     product.numReviews = data.numReviews;
+  //     product.rating = data.rating;
+  //     console.log(data.review);
+  //     Alert.alert("Success", data.message);
+
+  //     dispatch({ type: "REFRESH_PRODUCT", payload: product });
+
+  //     // dispatch({ type: "REFRESH_PRODUCT", payload: updatedProduct });
+  //     // Force re-render
+  //     //setForceRender((prev) => !prev);
+  //     setSelectedReview(null); // Exit edit mode
+  //   } catch (err) {
+  //     Alert.alert("Error!", getError(err));
+  //   }
+  // };
   const saveEdit = async () => {
     try {
       const { data } = await axios.put(
         `https://temimartapi.onrender.com/api/products/${product._id}/reviews/${reviewId}`,
-
         { rating: editRating, comment: editComment, name: userInfo?.name },
         { headers: { Authorization: `Bearer ${userInfo!.token}` } }
       );
 
-      dispatch({
-        type: "CREATE_SUCCESS",
-      });
-      if (!product.reviews) product.reviews = [];
-      product.reviews.push(data.review);
-      product.numReviews = data.numReviews;
-      product.rating = data.rating;
-      console.log(data.review);
       Alert.alert("Success", data.message);
 
-      dispatch({ type: "REFRESH_PRODUCT", payload: product });
+      // Use the updated product data from the response
+      dispatch({ type: "REFRESH_PRODUCT", payload: data.product });
 
-      // dispatch({ type: "REFRESH_PRODUCT", payload: updatedProduct });
-      // Force re-render
-      //setForceRender((prev) => !prev);
       setSelectedReview(null); // Exit edit mode
     } catch (err) {
       Alert.alert("Error!", getError(err));
     }
   };
 
+  // const handleDelete = async (reviewId: string) => {
+  //   Alert.alert(
+  //     "Confirm Delete",
+  //     "Are you sure you want to delete this review?",
+  //     [
+  //       { text: "Cancel", style: "cancel" },
+  //       {
+  //         text: "Delete",
+  //         onPress: async () => {
+  //           try {
+  //             await axios.delete(
+  //               `https://temimartapi.onrender.com/api/products/${product._id}/reviews/${reviewId}`,
+  //               { headers: { Authorization: `Bearer ${userInfo!.token}` } }
+  //             );
+
+  //             Alert.alert("Deleted", "Review deleted successfully");
+  //             dispatch({
+  //               type: "REFRESH_PRODUCT",
+  //               payload: updatedProduct as Product,
+  //             });
+  //           } catch (err) {
+  //             Alert.alert("Error", getError(err));
+  //           }
+  //         },
+  //       },
+  //     ]
+  //   );
+  // };
   const handleDelete = async (reviewId: string) => {
     Alert.alert(
       "Confirm Delete",
@@ -118,16 +164,14 @@ function ReviewFormat({ item, product }: ReviewFormatProps) {
           text: "Delete",
           onPress: async () => {
             try {
-              await axios.delete(
+              const { data } = await axios.delete(
                 `https://temimartapi.onrender.com/api/products/${product._id}/reviews/${reviewId}`,
                 { headers: { Authorization: `Bearer ${userInfo!.token}` } }
               );
 
               Alert.alert("Deleted", "Review deleted successfully");
-              dispatch({
-                type: "REFRESH_PRODUCT",
-                payload: updatedProduct as Product,
-              });
+              // Use the updated product data from the response
+              dispatch({ type: "REFRESH_PRODUCT", payload: data.product });
             } catch (err) {
               Alert.alert("Error", getError(err));
             }
@@ -203,7 +247,7 @@ function ReviewFormat({ item, product }: ReviewFormatProps) {
               <SelectDropdown
                 data={data}
                 onSelect={(selectedItem, index) => {
-                  console.log(selectedItem, index);
+                  // console.log(selectedItem, index);
                   setEditRating(index + 1);
                 }}
                 renderButton={(selectedItem, isOpened) => {
