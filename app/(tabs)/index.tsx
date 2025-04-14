@@ -1,8 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import Rating from "../../components/Rating";
 import { useGetProductsQuery } from "@/hooks/productHooks";
+import NetInfo from "@react-native-community/netinfo";
+import AnimatedNoInternetBanner from "@/components/AnimatedNoInternetBanner";
 import {
   View,
   Text,
@@ -11,14 +13,21 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   TextInput,
+  StatusBar,
 } from "react-native";
-
-import { ApiError } from "../types/ApiError";
-import { getError } from "../utils";
 
 export default function Index() {
   const { data: products, isLoading, error } = useGetProductsQuery();
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [isConnected, setIsConnected] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener((state) => {
+      setIsConnected(state.isConnected ?? true);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const filteredProducts = (products || []).filter((product) =>
     product.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -38,10 +47,12 @@ export default function Index() {
       }}
     >
       {" "}
-      <Text>Error etching data</Text>
+      <Text>Error fetching data</Text>
     </View>
   ) : (
     <View style={{ flex: 1 }}>
+      <StatusBar barStyle="light-content" backgroundColor="#FFA500" />
+      <AnimatedNoInternetBanner visible={!isConnected} />
       <View
         style={{
           backgroundColor: "#ff9900",
