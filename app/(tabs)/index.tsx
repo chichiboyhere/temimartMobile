@@ -32,44 +32,46 @@ export default function Index() {
   const filteredProducts = (products || []).filter((product) =>
     product.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
-  {
-    !isConnected && (
-      <View style={{ flex: 1 }}>
-        <StatusBar barStyle="light-content" backgroundColor="#FFA500" />
-        <AnimatedNoInternetBanner visible={!isConnected} />
-        <View
-          style={{
-            flex: 1,
-            justifyContent: "center",
-            alignItems: "center",
-            backgroundColor: "#fff",
-          }}
-        >
-          <ActivityIndicator size="large" color="#FFA500" />
-        </View>
-      </View>
-    );
-  }
 
   return (
     <View style={{ flex: 1 }}>
       <StatusBar barStyle="light-content" backgroundColor="#FFA500" />
-      <AnimatedNoInternetBanner visible={!isConnected} />
 
-      {isLoading ? (
+      {!isConnected && (
+        <>
+          <AnimatedNoInternetBanner visible={!isConnected} />
+          <View
+            style={{
+              flex: 1,
+              justifyContent: "center",
+              alignItems: "center",
+              backgroundColor: "#fff",
+            }}
+          >
+            <ActivityIndicator size="large" color="#FFA500" />
+          </View>
+        </>
+      )}
+
+      {isConnected && isLoading ? (
         <ActivityIndicator
           size="large"
           color="#0000ff"
           style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
         />
-      ) : error ? (
+      ) : isConnected && error ? (
         <View
-          style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
+          style={{
+            flex: 1,
+            alignItems: "center",
+            justifyContent: "center",
+          }}
         >
           <Text>Error fetching data</Text>
         </View>
-      ) : (
-        <>
+      ) : isConnected ? (
+        <View style={{ flex: 1 }}>
+          {/* Search Bar */}
           <View
             style={{
               backgroundColor: "#ff9900",
@@ -99,6 +101,7 @@ export default function Index() {
             />
           </View>
 
+          {/* Product Grid */}
           {filteredProducts.length > 0 ? (
             <FlatList
               data={filteredProducts}
@@ -154,8 +157,8 @@ export default function Index() {
               No products
             </Text>
           )}
-        </>
-      )}
+        </View>
+      ) : null}
     </View>
   );
 }
