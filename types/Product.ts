@@ -3,6 +3,7 @@ export type Review = {
   name: string;
   rating: number;
   createdAt: string;
+  title: string;
   comment: string;
 };
 

@@ -4,9 +4,10 @@ import { Store } from "@/Store";
 import { useContext, useState, useEffect } from "react";
 import { Badge } from "react-native-elements";
 import { View } from "react-native";
+import { StatusBar } from "expo-status-bar";
 
 export default function TabLayout() {
-  const { state, dispatch: ctxDispatch } = useContext(Store);
+  const { state } = useContext(Store);
   const { cart } = state;
 
   const [cartItemsCount, setCartItemsCount] = useState(0);
@@ -24,83 +25,93 @@ export default function TabLayout() {
   }, [cartItemsCount, setCartItemsCount, cart]);
 
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: "#318CE7",
-        headerStyle: {
-          backgroundColor: "#ff9900",
-          height: 120,
-        },
-        headerShadowVisible: false,
-        headerTintColor: "#fff",
-        tabBarStyle: {
-          backgroundColor: "#FAF9F6",
-        },
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: "All Products",
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? "home-sharp" : "home-outline"}
-              color={color}
-              size={24}
-            />
-          ),
+    <>
+      <Tabs
+        screenOptions={{
+          tabBarActiveTintColor: "#F8921B",
+          headerStyle: {
+            // Styles the header
+            backgroundColor: "gray",
+            height: 30,
+          },
+          headerShadowVisible: false,
+          headerTintColor: "black",
+          tabBarStyle: {
+            // Styles the footer
+            backgroundColor: "#FAF9F6", //#F8921B "#318CE7",#FAF9F6
+          },
         }}
-      />
+      >
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: "Home",
 
-      <Tabs.Screen
-        name="cart"
-        options={{
-          title: "Cart",
-          tabBarIcon: ({ color, focused }) => (
-            <View style={{ position: "relative" }}>
+            tabBarIcon: ({ color, focused }) => (
               <Ionicons
-                name={focused ? "cart-sharp" : "cart-outline"}
-                color={color}
+                name={focused ? "home-sharp" : "home-outline"}
+                color={"#F8921B"}
                 size={24}
               />
-              {cartItemsCount > 0 && (
-                <Badge
-                  value={cartItemsCount}
-                  containerStyle={{ position: "absolute", top: -5, right: -5 }}
+            ),
+          }}
+        />
+
+        <Tabs.Screen
+          name="cart"
+          options={{
+            title: "Cart",
+            tabBarIcon: ({ color, focused }) => (
+              <View style={{ position: "relative" }}>
+                <Ionicons
+                  name={focused ? "cart-sharp" : "cart-outline"}
+                  color={"#F8921B"}
+                  size={24}
                 />
-              )}
-            </View>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="about"
-        options={{
-          title: "About",
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={
-                focused ? "information-circle" : "information-circle-outline"
-              }
-              color={color}
-              size={24}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: "Profile",
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? "person" : "person-outline"}
-              color={color}
-              size={24}
-            />
-          ),
-        }}
-      />
-    </Tabs>
+                {cartItemsCount > 0 && (
+                  <Badge
+                    value={cartItemsCount}
+                    containerStyle={{
+                      position: "absolute",
+                      top: -5,
+                      right: -5,
+                    }}
+                  />
+                )}
+              </View>
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="about"
+          options={{
+            title: "About",
+            tabBarIcon: ({ color, focused }) => (
+              <Ionicons
+                name={
+                  focused ? "information-circle" : "information-circle-outline"
+                }
+                color={"#F8921B"}
+                size={24}
+              />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="profile"
+          options={{
+            title: "Profile",
+            tabBarIcon: ({ color, focused }) => (
+              <Ionicons
+                name={focused ? "person" : "person-outline"}
+                color={"#F8921B"}
+                size={24}
+              />
+            ),
+          }}
+        />
+      </Tabs>
+      <StatusBar style="light" />
+    </>
   );
 }

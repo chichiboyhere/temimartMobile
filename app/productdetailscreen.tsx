@@ -1,4 +1,10 @@
-import React, { useEffect, useState, useContext, useReducer } from "react";
+import React, {
+  useEffect,
+  useState,
+  useContext,
+  useReducer,
+  useMemo,
+} from "react";
 import {
   View,
   Text,
@@ -16,14 +22,17 @@ import { Product } from "./types/Product";
 import { Link, useRouter, useLocalSearchParams } from "expo-router";
 import { RouteProp, useRoute } from "@react-navigation/native";
 import { Store } from "@/Store";
+import Rating from "@/components/Rating";
+import { Picker } from "@react-native-picker/picker";
 
-import ReviewFormat from "@/components/ReviewFormat";
-import SelectDropdown from "react-native-select-dropdown";
+//import SelectDropdown from "react-native-select-dropdown";
 import { useGetProductDetailsBySlugQuery } from "@/hooks/productHooks";
 
-import Ionicons from "@expo/vector-icons/Ionicons";
+//import Ionicons from "@expo/vector-icons/Ionicons";
 import { ApiError } from "./types/ApiError";
 import { getError } from "../utils";
+//import CustomModal from "@/components/CustomModal";
+import ReviewFormModal from "@/components/CustomModal";
 
 type Action =
   | { type: "REFRESH_PRODUCT"; payload: Product }
@@ -44,14 +53,25 @@ const reducer = (state: any, action: Action) => {
   }
 };
 
-// type ProductDetailRouteProp = RouteProp<
-//   { ProductDetail: { productId: string } },
-//   "ProductDetail"
-// >;
+type ProductDetailRouteProp = RouteProp<
+  { ProductDetail: { productId: string } },
+  "ProductDetail"
+>;
 
 export default function ProductDetailScreen() {
   const { state, dispatch: ctxDispatch } = useContext(Store);
   const { cart, userInfo } = state;
+  const [currentUserExistingReview, setCurrentUserExistingReview] = useState<{
+    title?: string | undefined;
+    comment?: string | undefined;
+    rating?: number | undefined;
+  }>({});
+
+  type ReviewProp = {
+    title: string | undefined;
+    rating: number | undefined;
+    comment: string | undefined;
+  };
 
   //const route = useRoute<ProductDetailRouteProp>();
 
@@ -65,23 +85,36 @@ export default function ProductDetailScreen() {
   } = useGetProductDetailsBySlugQuery(slug as string);
 
   const router = useRouter();
-
-  const [rating, setRating] = useState(1);
-  const [comment, setComment] = useState("");
-
-  const data = [
-    { title: "1 - Poor" },
-    { title: "2 - Fair" },
-    { title: "3 - Good" },
-    { title: "4 - Very Good" },
-    { title: "5 - Excellent" },
-  ];
-
   const [{ loadingCreateReview }, dispatch] = useReducer(reducer, {
     product: {} as Product,
     loading: true,
     error: "",
   });
+
+  useEffect(() => {
+    if (product?.reviews && userInfo?.name) {
+      const currentUserReview = product.reviews.find(
+        (review) => review.name === userInfo.name
+      );
+
+      if (currentUserReview) {
+        const { title, comment, rating } = currentUserReview;
+        setCurrentUserExistingReview({ title, comment, rating });
+      } else {
+        setCurrentUserExistingReview({});
+      }
+    }
+    console.log("Current user data", currentUserExistingReview);
+  }, [product?.reviews, userInfo]);
+
+  useEffect(() => {
+    if (product?.reviews?.length) {
+      const avg =
+        product.reviews.reduce((a, b) => a + b.rating, 0) /
+        product.reviews.length;
+      product.rating = avg;
+    }
+  }, [product?.reviews]);
 
   if (isLoading) {
     return (
@@ -116,24 +149,42 @@ export default function ProductDetailScreen() {
     router.navigate("/cart");
   };
 
-  const submit = async () => {
-    if (!comment || !rating) {
-      Alert.alert("Blank Field(s)", "Please enter comment and rating");
+  const submit = async ({
+    title,
+    comment,
+    rating,
+  }: {
+    title: string;
+    comment: string;
+    rating: string | number;
+  }) => {
+    if (!title || !comment || !rating) {
+      console.log("Review at details page", { title, comment, rating });
+      Alert.alert("Blank Field(s)", "Please fill in all the fields");
       return;
     }
     try {
       const { data } = await axios.post(
         `https://temimartapi.onrender.com/api/products/${product._id}/reviews`,
-        { rating, comment, name: userInfo!.name },
+        { rating, title, comment, name: userInfo!.name },
         {
           headers: { Authorization: `Bearer ${userInfo!.token}` },
         }
       );
 
-      dispatch({
-        type: "CREATE_SUCCESS",
-      });
+      if (data.review in product.reviews) {
+        const rem = product.reviews.splice(
+          product.reviews.indexOf(data.review),
+          1
+        );
+        console.log("Removed Review:", rem);
+      }
+
+      dispatch({ type: "CREATE_SUCCESS" });
+
       if (!product.reviews) product.reviews = [];
+      console.log("New Review:", data.review);
+
       product.reviews.unshift(data.review);
       product.numReviews = data.numReviews;
       product.rating = data.rating;
@@ -141,6 +192,12 @@ export default function ProductDetailScreen() {
       Alert.alert("Success", "Review submitted successfully");
 
       dispatch({ type: "REFRESH_PRODUCT", payload: product });
+      // Assuming each review has a createdAt property of type string or Date
+      product.reviews.sort((a, b) => {
+        const dateA = new Date(a.createdAt).getTime();
+        const dateB = new Date(b.createdAt).getTime();
+        return dateB - dateA; // descending: most recent first
+      });
     } catch (err) {
       if (err instanceof Error) {
         Alert.alert("Not allowed!", getError(err));
@@ -152,7 +209,12 @@ export default function ProductDetailScreen() {
   return isLoading ? (
     <ActivityIndicator size="large" color="#0000ff" style={{ marginTop: 50 }} />
   ) : error ? (
-    <View>{getError(error as ApiError)}</View>
+    // <View>{getError(error as ApiError)}</View>
+    <View style={{ padding: 20 }}>
+      <Text style={{ color: "red", fontSize: 16 }}>
+        {getError(error as ApiError)}
+      </Text>
+    </View>
   ) : !product ? (
     <View>
       <Text style={{ textAlign: "center", marginTop: 20 }}>
@@ -193,26 +255,221 @@ export default function ProductDetailScreen() {
       ) : (
         <Text style={{ color: "red", fontWeight: "bold" }}>Out of Stock</Text>
       )}
-
       <View>
+        {userInfo ? (
+          <View>
+            <ReviewFormModal
+              onSubmitReview={submit}
+              review={currentUserExistingReview}
+            />
+          </View>
+        ) : (
+          <View
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              marginBottom: 25,
+            }}
+          >
+            <Text
+              style={{
+                color: "blue",
+                textDecorationLine: "underline",
+                fontWeight: "bold",
+                fontSize: 18,
+              }}
+            >
+              <Link href="/signin">Sign in </Link>
+            </Text>
+            <Text
+              style={{
+                fontSize: 18,
+              }}
+            >
+              to leave a review
+            </Text>
+          </View>
+        )}
+      </View>
+
+      <View style={{ marginBottom: 20 }}>
         <Text style={{ fontSize: 24, fontWeight: "bold", marginVertical: 10 }}>
           Reviews
         </Text>
 
         <View style={{ marginBottom: 10 }}>
-          {product.reviews.length === 0 && <Text>There is no review</Text>}
+          {product.reviews.length === 0 && (
+            <Text style={{ fontStyle: "italic", color: "gray" }}>
+              No reviews yet. Be the first to leave one!
+            </Text>
+          )}
         </View>
 
         <View>
           {product.reviews.length > 5
             ? product.reviews
+                .sort((a, b) => {
+                  const dateA = new Date(a.createdAt).getTime();
+                  const dateB = new Date(b.createdAt).getTime();
+                  return dateB - dateA; // descending: most recent first
+                })
                 .slice(0, 5)
                 .map((item) => (
-                  <ReviewFormat key={item._id} item={item} product={product} />
+                  // <View
+                  //   key={item._id}
+                  //   style={{
+                  //     borderColor: "gray",
+                  //     borderWidth: 1,
+                  //     borderRadius: 10,
+                  //     paddingVertical: 6,
+                  //     paddingHorizontal: 10,
+                  //     marginBottom: 10,
+                  //   }}
+                  // >
+                  //   <Text
+                  //     style={{
+                  //       fontSize: 16,
+                  //       fontWeight: "bold",
+                  //       marginVertical: 10,
+                  //     }}
+                  //   >
+                  //     {item.name}
+                  //   </Text>
+                  //   <Text>
+                  //     <Rating rating={item.rating} caption=" "></Rating>
+                  //   </Text>
+                  //   {item.title && <Text>{item.title}</Text>}
+                  //   <Text>{item.createdAt.substring(0, 10)}</Text>
+                  //   <Text>{item.comment}</Text>
+                  // </View>
+                  <View
+                    key={item._id}
+                    style={{
+                      borderColor: "gray",
+                      borderWidth: 1,
+                      borderRadius: 10,
+                      paddingVertical: 6,
+                      paddingHorizontal: 10,
+                      marginBottom: 10,
+                    }}
+                  >
+                    {userInfo?.profileImage ? (
+                      <Image
+                        source={{ uri: userInfo.profileImage }}
+                        style={{
+                          width: 30,
+                          height: 30,
+                          borderRadius: 15,
+                          marginRight: 10,
+                        }}
+                      />
+                    ) : (
+                      <View
+                        style={{
+                          width: 30,
+                          height: 30,
+                          borderRadius: 15,
+                          backgroundColor: "#318CE7",
+                          justifyContent: "center",
+                          alignItems: "center",
+                          marginRight: 10,
+                        }}
+                      >
+                        <Text style={{ color: "white", fontWeight: "bold" }}>
+                          {item.name[0]}
+                        </Text>
+                      </View>
+                    )}
+                    <Text style={{ fontWeight: "bold" }}>{item.name}</Text>
+                    <Text>
+                      <Rating rating={item.rating} caption=" "></Rating>
+                    </Text>
+                    <Text>{item.createdAt.substring(0, 10)}</Text>
+                    {item.title && <Text>{item.title}</Text>}
+                    <Text>{item.comment}</Text>
+                  </View>
                 ))
-            : product.reviews?.map((item) => (
-                <ReviewFormat key={item._id} item={item} product={product} />
-              ))}
+            : product.reviews
+                .sort((a, b) => {
+                  const dateA = new Date(a.createdAt).getTime();
+                  const dateB = new Date(b.createdAt).getTime();
+                  return dateB - dateA; // descending: most recent first
+                })
+                ?.map((item) => (
+                  // <View
+                  //   key={item._id}
+                  //   style={{
+                  //     borderColor: "gray",
+                  //     borderWidth: 1,
+                  //     borderRadius: 10,
+                  //     paddingVertical: 6,
+                  //     paddingHorizontal: 10,
+                  //     marginBottom: 10,
+                  //   }}
+                  // >
+                  //   <Text
+                  //     style={{
+                  //       fontSize: 16,
+                  //       fontWeight: "bold",
+                  //       marginVertical: 10,
+                  //     }}
+                  //   >
+                  //     {item.name}
+                  //   </Text>
+                  //   <Text>
+                  //     <Rating rating={item.rating} caption=" "></Rating>
+                  //   </Text>
+                  //   <Text>{item.createdAt.substring(0, 10)}</Text>
+                  //   {item.title && <Text>{item.title}</Text>}
+                  //   <Text>{item.comment}</Text>
+                  // </View>
+                  <View
+                    key={item._id}
+                    style={{
+                      borderColor: "gray",
+                      borderWidth: 1,
+                      borderRadius: 10,
+                      paddingVertical: 6,
+                      paddingHorizontal: 10,
+                      marginBottom: 10,
+                    }}
+                  >
+                    {userInfo?.profileImage ? (
+                      <Image
+                        source={{ uri: userInfo?.profileImage }}
+                        style={{
+                          width: 30,
+                          height: 30,
+                          borderRadius: 15,
+                          marginRight: 10,
+                        }}
+                      />
+                    ) : (
+                      <View
+                        style={{
+                          width: 30,
+                          height: 30,
+                          borderRadius: 15,
+                          backgroundColor: "#318CE7",
+                          justifyContent: "center",
+                          alignItems: "center",
+                          marginRight: 10,
+                        }}
+                      >
+                        <Text style={{ color: "white", fontWeight: "bold" }}>
+                          {item.name[0]}
+                        </Text>
+                      </View>
+                    )}
+                    <Text style={{ fontWeight: "bold" }}>{item.name}</Text>
+                    <Text>
+                      <Rating rating={item.rating} caption=" "></Rating>
+                    </Text>
+                    <Text>{item.createdAt.substring(0, 10)}</Text>
+                    {item.title && <Text>{item.title}</Text>}
+                    <Text>{item.comment}</Text>
+                  </View>
+                ))}
           {product.reviews.length > 5 && (
             <View>
               <TouchableOpacity
@@ -234,133 +491,6 @@ export default function ProductDetailScreen() {
                   More Reviews
                 </Text>
               </TouchableOpacity>
-            </View>
-          )}
-        </View>
-
-        <View>
-          {userInfo ? (
-            <View
-              style={{
-                marginVertical: 20,
-                borderWidth: 2,
-                borderColor: "gray",
-                padding: 12,
-                borderRadius: 10,
-              }}
-            >
-              <Text
-                style={{ fontSize: 24, fontWeight: "bold", marginVertical: 10 }}
-              >
-                Leave a customer review
-              </Text>
-              <Text style={styles.title}>Rating</Text>
-              <SelectDropdown
-                data={data}
-                onSelect={(selectedItem, index) => {
-                  setRating(index + 1);
-                }}
-                renderButton={(selectedItem, isOpened) => {
-                  return (
-                    <View style={styles.dropdownButtonStyle}>
-                      <Text style={styles.dropdownButtonTxtStyle}>
-                        {(selectedItem && selectedItem.title) ||
-                          "Select a Rating"}
-                      </Text>
-
-                      {isOpened ? (
-                        <Ionicons
-                          name={"chevron-up"}
-                          color={"#ffc000"}
-                          size={24}
-                          style={styles.dropdownButtonArrowStyle}
-                        />
-                      ) : (
-                        <Ionicons
-                          name={"chevron-down"}
-                          size={24}
-                          style={styles.dropdownButtonArrowStyle}
-                        />
-                      )}
-                    </View>
-                  );
-                }}
-                renderItem={(item, index, isSelected) => {
-                  return (
-                    <View
-                      style={{
-                        ...styles.dropdownItemStyle,
-                        ...(isSelected && { backgroundColor: "#D2D9DF" }),
-                      }}
-                    >
-                      <Text style={styles.dropdownItemTxtStyle}>
-                        {item.title}
-                      </Text>
-                    </View>
-                  );
-                }}
-                showsVerticalScrollIndicator={false}
-                dropdownStyle={styles.dropdownMenuStyle}
-              />
-              <Text style={styles.title}>Comment</Text>
-              <TextInput
-                style={styles.input}
-                multiline
-                numberOfLines={3}
-                value={comment}
-                placeholder="Comment"
-                onChangeText={setComment}
-              />
-
-              <TouchableOpacity
-                style={{
-                  backgroundColor: "#ff9900",
-                  padding: 15,
-                  borderRadius: 5,
-                  alignItems: "center",
-                }}
-                onPress={submit}
-                disabled={loadingCreateReview}
-              >
-                <Text
-                  style={{ color: "white", fontWeight: "bold", fontSize: 18 }}
-                >
-                  Submit
-                </Text>
-              </TouchableOpacity>
-
-              {loadingCreateReview && (
-                <>
-                  <Text>...loading</Text>
-                  <ActivityIndicator size="large" color="#0000ff" />
-                </>
-              )}
-            </View>
-          ) : (
-            <View
-              style={{
-                display: "flex",
-                flexDirection: "row",
-                marginBottom: 25,
-              }}
-            >
-              <Text
-                style={{
-                  color: "blue",
-                  textDecorationLine: "underline",
-                  fontWeight: "bold",
-                  fontSize: 18,
-                }}
-              >
-                <Link href="/signin">Sign in </Link>
-              </Text>
-              <Text
-                style={{
-                  fontSize: 18,
-                }}
-              >
-                to leave a review
-              </Text>
             </View>
           )}
         </View>
