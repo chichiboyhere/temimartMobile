@@ -507,8 +507,6 @@ export default function Index() {
             </FadeInView>
           </View> */}
 
-          <GiftsBanner />
-
           {/* Product Grid */}
           {filteredProducts.length > 0 ? (
             <FlatList
@@ -550,6 +548,7 @@ const styles = StyleSheet.create({
     height: 40,
     justifyContent: "center",
     alignItems: "center",
+    gap: 10,
   },
   selectedMenuItem: {
     //backgroundColor: "#FF9900", // Highlight color #007BFF"
@@ -568,59 +567,5 @@ const styles = StyleSheet.create({
     //color: "white", // Text color when selected
     fontWeight: "bold",
     //textDecorationLine: "underline",
-  },
-  // productItem: {
-  //   flex: 1,
-  //   margin: 5,
-  //   backgroundColor: "#fff",
-  //   borderRadius: 10,
-  //   padding: 10,
-  //   shadowColor: "#000",
-  //   shadowOpacity: 0.1,
-  //   shadowOffset: { width: 0, height: 2 },
-  //   elevation: 3,
-  // },
-  productItem: {
-    flex: 1,
-    margin: 5,
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    padding: 10,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
-  },
-  productContent: {
-    flexDirection: "column",
-    alignItems: "flex-start", // Aligns all content to the start (left)
-  },
-  productImage: {
-    width: 150,
-    height: 150,
-    borderRadius: 10,
-    alignSelf: "center", // centers the image in the card
-    marginBottom: 8,
-  },
-  productName: {
-    fontWeight: "bold",
-    fontSize: 14,
-    marginBottom: 5,
-  },
-  priceContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 4,
-  },
-  nairaSymbol: {
-    color: "#F8921B",
-    fontWeight: "600",
-    fontSize: 14,
-    marginRight: 2,
-  },
-  productPrice: {
-    color: "#F8921B",
-    fontWeight: "600",
-    fontSize: 16,
   },
 });

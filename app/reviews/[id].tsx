@@ -38,9 +38,6 @@ const Reviews = () => {
         marginBottom: 25,
       }}
     >
-      <Text style={{ fontSize: 20, fontWeight: "700" }}>
-        Reviews on product: {productId}
-      </Text>
       {product.reviews?.map((item: Review) => (
         <ReviewFormat key={item._id} item={item} product={product} />
       ))}

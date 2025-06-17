@@ -39,7 +39,14 @@ export default function RootLayout() {
             name="orderHistory"
             options={{ title: "Order History" }}
           />
-          <Stack.Screen name="reviews/[id]" options={{ title: "Reviews" }} />
+          <Stack.Screen
+            name="reviews/[id]"
+            options={{ title: "Item reviews" }}
+          />
+          <Stack.Screen
+            name="flyToCartAnimation"
+            options={{ title: "cart animation" }}
+          />
         </Stack>
         <StatusBar style="light" />
       </StoreProvider>

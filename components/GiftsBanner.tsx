@@ -37,7 +37,9 @@
 // export default GiftsBanner;
 
 // 02 GiftsBanner.tsx
-import { Image, StyleSheet, ScrollView } from "react-native";
+import { Image, StyleSheet, ScrollView, Text } from "react-native";
+import { Link } from "expo-router";
+
 import GiftBox from "./GiftBox";
 import React from "react";
 
@@ -48,36 +50,56 @@ const GiftsBanner = () => {
       showsHorizontalScrollIndicator={false}
       style={styles.container}
     >
-      <GiftBox
-        style={{
-          backgroundColor: "green",
-          width: 80,
-          height: 50,
-          borderRadius: 5,
-        }}
-      />
+      <Link href="/profile">
+        <GiftBox
+          style={{
+            width: 80,
+            height: 40,
+            borderRadius: 5,
+            backgroundColor: "purple",
+          }}
+        >
+          <Image
+            source={require("../assets/images/sticker2.png")}
+            style={{ width: 80, height: 40 }}
+            //resizeMode="contain"
+          />
+        </GiftBox>
+      </Link>
+
       <GiftBox
         style={{
           backgroundColor: "#F8921B",
           borderRadius: 50,
-          width: 60,
-          height: 60,
-        }}
-      />
-      <GiftBox
-        style={{
-          width: 100,
+          width: 50,
           height: 50,
-          borderRadius: 5,
-          backgroundColor: "purple",
         }}
       >
+        {/* <Link href="/flyToCartAnimation"> */}
         <Image
-          source={require("../assets/images/sweets.jpg")}
-          style={{ width: 100, height: 50 }}
+          source={require("../assets/images/adaptive-icon-tem.png")}
+          style={{ width: 50, height: 50 }}
           //resizeMode="contain"
         />
+        {/* </Link> */}
       </GiftBox>
+
+      <Link href="/profile">
+        <GiftBox
+          style={{
+            width: 80,
+            height: 40,
+            borderRadius: 5,
+            backgroundColor: "purple",
+          }}
+        >
+          <Image
+            source={require("../assets/images/sticker1.png")}
+            style={{ width: 80, height: 40 }}
+            // resizeMode="contain"
+          />
+        </GiftBox>
+      </Link>
     </ScrollView>
   );
 };
@@ -89,7 +111,11 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     paddingHorizontal: 15,
     paddingVertical: 10,
-    zIndex: -10,
+  },
+  text: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "white",
   },
 });
 

@@ -3,7 +3,7 @@ import React, {
   useState,
   useContext,
   useReducer,
-  useMemo,
+  useRef,
 } from "react";
 import {
   View,
@@ -13,17 +13,23 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
-  TextInput,
+  Animated,
   StyleSheet,
 } from "react-native";
+import { Badge } from "react-native-elements";
+
+// For audio and vibration feedback when items are added to cart
+import * as Haptics from "expo-haptics";
+import { Audio } from "expo-av";
 
 import axios from "axios";
 import { Product } from "./types/Product";
+import { CartItem } from "./types/Cart";
 import { Link, useRouter, useLocalSearchParams } from "expo-router";
 import { RouteProp, useRoute } from "@react-navigation/native";
 import { Store } from "@/Store";
 import Rating from "@/components/Rating";
-import { Picker } from "@react-native-picker/picker";
+import { Ionicons } from "@expo/vector-icons";
 
 //import SelectDropdown from "react-native-select-dropdown";
 import { useGetProductDetailsBySlugQuery } from "@/hooks/productHooks";
@@ -31,8 +37,10 @@ import { useGetProductDetailsBySlugQuery } from "@/hooks/productHooks";
 //import Ionicons from "@expo/vector-icons/Ionicons";
 import { ApiError } from "./types/ApiError";
 import { getError } from "../utils";
-//import CustomModal from "@/components/CustomModal";
+import CountdownTimer from "@/components/CountdownTimer";
 import ReviewFormModal from "@/components/CustomModal";
+import { format, addDays } from "date-fns";
+import Icon from "react-native-vector-icons/FontAwesome";
 
 type Action =
   | { type: "REFRESH_PRODUCT"; payload: Product }
@@ -61,11 +69,30 @@ type ProductDetailRouteProp = RouteProp<
 export default function ProductDetailScreen() {
   const { state, dispatch: ctxDispatch } = useContext(Store);
   const { cart, userInfo } = state;
+
   const [currentUserExistingReview, setCurrentUserExistingReview] = useState<{
     title?: string | undefined;
     comment?: string | undefined;
     rating?: number | undefined;
   }>({});
+  const [cartItemsCount, setCartItemsCount] = useState(0);
+  // Add to cart animation
+  const animatedValue = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
+  const cartScale = useRef(new Animated.Value(1)).current;
+
+  const [showFlyImage, setShowFlyImage] = useState(false);
+
+  const [productQtyInCart, setProductQtyInCart] = useState(0);
+
+  const flyImageRef = useRef(null);
+  const cartIconRef = useRef(null);
+
+  const productImageLayout = useRef({ x: 0, y: 0 });
+  const cartIconLayout = useRef({ x: 0, y: 0 });
+  const [displayProdAdjumentButtons, setDisplayProdAdjumentButtons] =
+    useState(false);
+  const [disCountInFigures, setDisCountInFigures] = useState(0);
+  const [newPrice, setNewPrice] = useState(0);
 
   type ReviewProp = {
     title: string | undefined;
@@ -92,6 +119,11 @@ export default function ProductDetailScreen() {
   });
 
   useEffect(() => {
+    const prodInCart = cart.cartItems.find((x) => x._id === product?._id);
+    setProductQtyInCart(prodInCart ? prodInCart.quantity : 0);
+  }, [cart.cartItems]);
+
+  useEffect(() => {
     if (product?.reviews && userInfo?.name) {
       const currentUserReview = product.reviews.find(
         (review) => review.name === userInfo.name
@@ -116,6 +148,26 @@ export default function ProductDetailScreen() {
     }
   }, [product?.reviews]);
 
+  useEffect(() => {
+    const calcCartItems = () => {
+      if (cart.cartItems.length > 0) {
+        const count = cart.cartItems.reduce((a, c) => a + c.quantity, 0);
+        setCartItemsCount(count);
+      }
+      if (cart.cartItems.length === 0) setCartItemsCount(0);
+    };
+
+    calcCartItems();
+  }, [cart]); // Removed dependencies: cartItemsCount, setCartItemsCount,
+  useEffect(() => {
+    if (product?.discount) {
+      const discount = (product.discount * product.price) / 100;
+      setDisCountInFigures(discount);
+      const newPrice = product.price - discount;
+      setNewPrice(newPrice);
+    }
+  }, [product?.discount]);
+
   if (isLoading) {
     return (
       <ActivityIndicator
@@ -134,7 +186,65 @@ export default function ProductDetailScreen() {
     );
   }
 
+  const updateCartHandler = (updateType: string) => {
+    const item = cart.cartItems.find((x) => x._id === product?._id);
+    if (updateType === "plus") {
+      const quantity = item ? item.quantity + 1 : 1;
+      setProductQtyInCart(quantity);
+      if (product.countInStock < quantity) {
+        Alert.alert("Product out of stock!", "Sorry. Product is out of stock");
+        return;
+      }
+      ctxDispatch({
+        type: "CART_ADD_ITEM",
+        payload: { ...product, quantity },
+      });
+    } else if (updateType === "minus") {
+      // const quantity = item ? item.quantity - 1 : null;
+      const quantity = item ? item.quantity - 1 : 0;
+      setProductQtyInCart(quantity);
+      ctxDispatch({
+        type: "CART_ADD_ITEM",
+        payload: { ...product, quantity },
+      });
+
+      if (item?.quantity === 1) {
+        ctxDispatch({ type: "CART_REMOVE_ITEM", payload: item });
+        setDisplayProdAdjumentButtons(false);
+      }
+    }
+  };
+
+  const playAddToCartSound = async () => {
+    const { sound } = await Audio.Sound.createAsync(
+      require("../assets/sounds/add-to-cart.wav") // Replace with your sound file
+    );
+    await sound.playAsync();
+  };
+
+  const getOneWeekFromNowHandler = () => {
+    const oneWeekFromNow = new Date();
+    oneWeekFromNow.setDate(oneWeekFromNow.getDate() + 7);
+    return oneWeekFromNow;
+  };
+
+  const getDeliveryDate = () => {
+    const now = new Date();
+    const nextWeek = addDays(now, 7);
+    const threeWksAway = addDays(now, 21);
+
+    const start = format(nextWeek, "MMM dd");
+    const end = format(threeWksAway, "MMM dd");
+    return `${start} - ${end}`;
+  };
+
   const addToCartHandler = async () => {
+    setDisplayProdAdjumentButtons(true);
+    startFlyAnimation();
+    Haptics.selectionAsync(); // Gentle haptic
+    //Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    playAddToCartSound(); // Optional: add sound
+
     const existItem = cart.cartItems.find((x) => x._id === product?._id);
     const quantity = existItem ? existItem.quantity + 1 : 1;
 
@@ -142,11 +252,41 @@ export default function ProductDetailScreen() {
       Alert.alert("Product out of stock!", "Sorry. Product is out of stock");
       return;
     }
+
     ctxDispatch({
       type: "CART_ADD_ITEM",
       payload: { ...product, quantity },
     });
-    router.navigate("/cart");
+  };
+
+  const startFlyAnimation = () => {
+    const from = productImageLayout.current;
+    const to = cartIconLayout.current;
+
+    if (!from || !to) return; // At first render: if cart position(Layout hasn't been loaded) hasn't been decided
+
+    animatedValue.setValue({ x: from.x, y: from.y });
+    setShowFlyImage(true);
+
+    Animated.timing(animatedValue, {
+      toValue: { x: to.x, y: to.y },
+      duration: 700,
+      useNativeDriver: true,
+    }).start(() => {
+      setShowFlyImage(false);
+      // Start bounce
+      Animated.sequence([
+        Animated.spring(cartScale, {
+          toValue: 1.4,
+          friction: 3,
+          useNativeDriver: true,
+        }),
+        Animated.spring(cartScale, {
+          toValue: 1,
+          useNativeDriver: true,
+        }),
+      ]).start(); // bounce code ends
+    });
   };
 
   const submit = async ({
@@ -222,361 +362,706 @@ export default function ProductDetailScreen() {
       </Text>
     </View>
   ) : (
-    <ScrollView style={{ flex: 1, padding: 15, backgroundColor: "#fff" }}>
-      <Image
-        source={{ uri: product.image }}
-        style={{ width: "100%", height: 300, borderRadius: 10 }}
-      />
-
-      {/* Product Details */}
-      <Text style={{ fontSize: 24, fontWeight: "bold", marginVertical: 10 }}>
-        {product.name}
-      </Text>
-      <Text style={{ fontSize: 20, color: "green" }}>$ {product.price}</Text>
-      <Text style={{ fontSize: 18, marginVertical: 10 }}>
-        {product.description}
-      </Text>
-
-      {/* Stock and Add to Cart */}
-      {product.countInStock > 0 ? (
-        <TouchableOpacity
-          style={{
-            backgroundColor: "#ff9900",
-            padding: 15,
-            borderRadius: 5,
-            alignItems: "center",
+    <View style={{ flex: 1 }}>
+      <ScrollView
+        style={{
+          flex: 1,
+          backgroundColor: "#fff",
+        }}
+      >
+        <Image
+          source={{ uri: product.image }}
+          style={{ width: "100%", height: 300 }}
+          onLayout={(event) => {
+            productImageLayout.current = event.nativeEvent.layout;
           }}
-          onPress={addToCartHandler}
-        >
-          <Text style={{ color: "white", fontWeight: "bold", fontSize: 18 }}>
-            Add to Cart
-          </Text>
-        </TouchableOpacity>
-      ) : (
-        <Text style={{ color: "red", fontWeight: "bold" }}>Out of Stock</Text>
-      )}
-      <View>
-        {userInfo ? (
-          <View>
-            <ReviewFormModal
-              onSubmitReview={submit}
-              review={currentUserExistingReview}
-            />
+        />
+        {/* Banner */}
+        <View style={styles.productImageBanner}>
+          <View style={styles.productImageBannerInner}>
+            <Ionicons name="checkmark" size={18} color="green" />
+            <Text style={styles.productImageBannerText}>
+              Free shipping on all orders
+            </Text>
           </View>
-        ) : (
+          <View style={styles.productImageBannerMiddle}></View>
+          <View style={styles.productImageBannerInner}>
+            <Ionicons name="checkmark" size={18} color="green" />
+            <Text style={styles.productImageBannerText}>
+              &#x20A6; 1,600 Credit for delay
+            </Text>
+          </View>
+        </View>
+        {/* Product Details */}
+        <View style={{ padding: 15 }}>
+          <Text
+            style={{ fontSize: 24, fontWeight: "bold", marginVertical: 10 }}
+          >
+            {product.name}
+          </Text>
+          <Text style={{ fontSize: 18, marginVertical: 10 }}>
+            {product.description}
+          </Text>
+          {/* Number of products sold and starred rating */}
           <View
             style={{
               display: "flex",
               flexDirection: "row",
-              marginBottom: 25,
+              justifyContent: "space-between",
             }}
           >
-            <Text
-              style={{
-                color: "blue",
-                textDecorationLine: "underline",
-                fontWeight: "bold",
-                fontSize: 18,
-              }}
-            >
-              <Link href="/signin">Sign in </Link>
-            </Text>
-            <Text
-              style={{
-                fontSize: 18,
-              }}
-            >
-              to leave a review
+            <View>
+              <Text style={{ fontSize: 13, color: "gray" }}>
+                {product.numSold
+                  ? product.numSold +
+                    " sold " +
+                    "|" +
+                    " Sold by " +
+                    product.brand.charAt(0).toUpperCase() +
+                    product.brand.slice(1)
+                  : null}
+              </Text>
+            </View>
+
+            <View style={{ display: "flex", flexDirection: "row" }}>
+              <View>
+                <Text style={{ fontSize: 10 }}>
+                  {product.rating && product.rating.toFixed(1)}
+                </Text>
+              </View>
+              {product.rating && <Rating rating={product.rating} caption=" " />}
+            </View>
+          </View>
+          <View
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+            }}
+          >
+            <Text style={{ fontSize: 14 }}>Est. &nbsp;</Text>
+            <Text style={{ fontSize: 20, color: "green" }}>
+              &#x20A6;
+              {product.discount ? newPrice : product.price}
             </Text>
           </View>
-        )}
-      </View>
 
-      <View style={{ marginBottom: 20 }}>
-        <Text style={{ fontSize: 24, fontWeight: "bold", marginVertical: 10 }}>
-          Reviews
-        </Text>
-
-        <View style={{ marginBottom: 10 }}>
-          {product.reviews.length === 0 && (
-            <Text style={{ fontStyle: "italic", color: "gray" }}>
-              No reviews yet. Be the first to leave one!
-            </Text>
+          {/* Discount offer */}
+          {product.discount && (
+            <View style={{ gap: 8, marginBottom: 10 }}>
+              <View style={styles.discountViewPlusCountdown}>
+                <View style={styles.discountedPriceContainer}>
+                  <Text style={styles.saveText}>after applying promos to </Text>
+                  <Text style={styles.nairaSymbolInDisc}>&#x20A6;</Text>
+                  <Text style={styles.discountedPrice}>
+                    {disCountInFigures?.toFixed?.(0) || "0"}
+                  </Text>
+                  <Text style={styles.saveText}> |</Text>
+                  <CountdownTimer item={product} color="white" />
+                </View>
+                <Text
+                  style={{
+                    textDecorationLine: "line-through",
+                    textDecorationColor: "red",
+                  }}
+                >
+                  &#x20A6; {product.price}
+                </Text>
+              </View>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "flex-start",
+                  gap: 6,
+                }}
+              >
+                <View style={styles.discountPromoContainer}>
+                  <Text style={styles.discountPromoText}>
+                    {product.discount} % OFF
+                  </Text>
+                </View>
+                <View style={styles.discountPromoContainer}>
+                  <Text style={styles.discountPromoText}>ALMOST SOLD OUT</Text>
+                  <Ionicons
+                    name="help-circle-outline"
+                    size={16}
+                    color="#F8921B"
+                  />
+                </View>
+              </View>
+            </View>
           )}
-        </View>
+          {/* Shipping info */}
+          <View
+            style={{
+              borderTopWidth: 6,
+              borderColor: "#D3D3D3",
+              paddingVertical: 10,
+              flexDirection: "row",
+              justifyContent: "flex-start",
+              alignItems: "center",
+              gap: 6,
+            }}
+          >
+            <Icon name="bus" color={"green"} size={16} />
+            <Text style={{ color: "green", fontSize: 15, fontWeight: "600" }}>
+              Free shipping on all orders
+            </Text>
+          </View>
+          <View style={{ gap: 8, marginBottom: 10 }}>
+            <Text style={{ fontSize: 15, color: "gray" }}>
+              Delivery: {getDeliveryDate()}
+            </Text>
+            <View style={{ flexDirection: "row", gap: 5 }}>
+              <Text style={{ fontSize: 15, color: "gray" }}>
+                Courier company:
+              </Text>
+              <Image
+                source={require("../assets/images/speedaf.png")}
+                style={{ width: 50, height: 20 }}
+              />
+              <Text>Speedaf</Text>
+            </View>
+          </View>
+          <View
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              justifyContent: "space-between",
+              borderTopWidth: 1,
+              borderColor: "gray",
+              paddingVertical: 10,
+            }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                gap: 5,
+                justifyContent: "flex-start",
+                alignItems: "center",
+              }}
+            >
+              <Ionicons name="shield-sharp" size={16} color="green" />
+              <Text style={{ fontSize: 15, color: "green" }}>
+                Safe payments
+              </Text>
+              <View
+                style={{
+                  width: 3,
+                  height: 3,
+                  borderRadius: 50,
+                  backgroundColor: "green",
+                }}
+              ></View>
+              <Text style={{ fontSize: 15, color: "green" }}>
+                Secure privacy
+              </Text>
+            </View>
+            <View>
+              <Icon name="caret-right" size={20} color="gray" />
+            </View>
+          </View>
+          <View
+            style={{
+              borderTopColor: "gray",
+              borderTopWidth: 1,
+              paddingVertical: 10,
+              flexDirection: "row",
+              justifyContent: "space-between",
+            }}
+          >
+            <View
+              style={{ flexDirection: "row", gap: 5, alignItems: "center" }}
+            >
+              <Icon name="list" size={16} color="green" />
+              <Text style={{ fontSize: 14, color: "green" }}>
+                Order guarantee
+              </Text>
+            </View>
+            <View style={{ flexDirection: "row", gap: 5 }}>
+              <Text style={{ fontSize: 15, color: "gray" }}>
+                6 Temi guarantees
+              </Text>
+              <Icon name="caret-right" size={20} color="gray" />
+            </View>
+          </View>
+          <ScrollView
+            horizontal={true}
+            showsHorizontalScrollIndicator={false}
+            style={{ borderBottomWidth: 6, borderColor: "#D3D3D3" }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                gap: 7,
+                alignItems: "center",
+                marginVertical: 10,
+                height: 40,
+                paddingVertical: 5,
+              }}
+            >
+              <View style={styles.shippingScrollViewItem}>
+                <Text style={styles.shippingScrollViewItemText}>
+                  90-Day Returns
+                </Text>
+              </View>
+              <View style={styles.shippingScrollViewItem}>
+                <Text style={styles.shippingScrollViewItemText}>
+                  &#x20A6; 1,600 Credit for delay
+                </Text>
+              </View>
+              <View style={styles.shippingScrollViewItem}>
+                <Text style={styles.shippingScrollViewItemText}>
+                  Return if item damaged
+                </Text>
+              </View>
+              <View style={styles.shippingScrollViewItem}>
+                <Text style={styles.shippingScrollViewItemText}>
+                  15-day no update refund
+                </Text>
+              </View>
+              <View style={styles.shippingScrollViewItem}>
+                <Text style={styles.shippingScrollViewItemText}>
+                  60-day no delivery refund
+                </Text>
+              </View>
+              <View style={styles.shippingScrollViewItem}>
+                <Text style={styles.shippingScrollViewItemText}>
+                  Price adjustment
+                </Text>
+              </View>
+            </View>
+          </ScrollView>
+          <View>
+            {userInfo ? (
+              <View>
+                <ReviewFormModal
+                  onSubmitReview={submit}
+                  review={currentUserExistingReview}
+                />
+              </View>
+            ) : (
+              <View
+                style={{
+                  display: "flex",
+                  flexDirection: "row",
+                  marginBottom: 25,
+                }}
+              >
+                <Text
+                  style={{
+                    color: "blue",
+                    textDecorationLine: "underline",
+                    fontWeight: "bold",
+                    fontSize: 18,
+                  }}
+                >
+                  <Link href="/signin">Sign in </Link>
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 18,
+                  }}
+                >
+                  to leave a review
+                </Text>
+              </View>
+            )}
+          </View>
 
-        <View>
-          {product.reviews.length > 5
-            ? product.reviews
+          <View style={{ marginBottom: 20 }}>
+            <Text
+              style={{ fontSize: 24, fontWeight: "bold", marginVertical: 10 }}
+            >
+              Reviews
+            </Text>
+
+            <View style={{ marginBottom: 10 }}>
+              {product.reviews.length === 0 && (
+                <Text style={{ fontStyle: "italic", color: "gray" }}>
+                  No reviews yet. Be the first to leave one!
+                </Text>
+              )}
+            </View>
+
+            <View>
+              {product.reviews
                 .sort((a, b) => {
                   const dateA = new Date(a.createdAt).getTime();
                   const dateB = new Date(b.createdAt).getTime();
                   return dateB - dateA; // descending: most recent first
                 })
                 .slice(0, 5)
-                .map((item) => (
-                  // <View
-                  //   key={item._id}
-                  //   style={{
-                  //     borderColor: "gray",
-                  //     borderWidth: 1,
-                  //     borderRadius: 10,
-                  //     paddingVertical: 6,
-                  //     paddingHorizontal: 10,
-                  //     marginBottom: 10,
-                  //   }}
-                  // >
-                  //   <Text
-                  //     style={{
-                  //       fontSize: 16,
-                  //       fontWeight: "bold",
-                  //       marginVertical: 10,
-                  //     }}
-                  //   >
-                  //     {item.name}
-                  //   </Text>
-                  //   <Text>
-                  //     <Rating rating={item.rating} caption=" "></Rating>
-                  //   </Text>
-                  //   {item.title && <Text>{item.title}</Text>}
-                  //   <Text>{item.createdAt.substring(0, 10)}</Text>
-                  //   <Text>{item.comment}</Text>
-                  // </View>
-                  <View
-                    key={item._id}
-                    style={{
-                      borderColor: "gray",
-                      borderWidth: 1,
-                      borderRadius: 10,
-                      paddingVertical: 6,
-                      paddingHorizontal: 10,
-                      marginBottom: 10,
-                    }}
-                  >
-                    {userInfo?.profileImage ? (
-                      <Image
-                        source={{ uri: userInfo.profileImage }}
-                        style={{
-                          width: 30,
-                          height: 30,
-                          borderRadius: 15,
-                          marginRight: 10,
-                        }}
-                      />
-                    ) : (
-                      <View
-                        style={{
-                          width: 30,
-                          height: 30,
-                          borderRadius: 15,
-                          backgroundColor: "#318CE7",
-                          justifyContent: "center",
-                          alignItems: "center",
-                          marginRight: 10,
-                        }}
-                      >
-                        <Text style={{ color: "white", fontWeight: "bold" }}>
-                          {item.name[0]}
-                        </Text>
-                      </View>
-                    )}
-                    <Text style={{ fontWeight: "bold" }}>{item.name}</Text>
-                    <Text>
-                      <Rating rating={item.rating} caption=" "></Rating>
-                    </Text>
-                    <Text>{item.createdAt.substring(0, 10)}</Text>
-                    {item.title && <Text>{item.title}</Text>}
-                    <Text>{item.comment}</Text>
-                  </View>
-                ))
-            : product.reviews
-                .sort((a, b) => {
-                  const dateA = new Date(a.createdAt).getTime();
-                  const dateB = new Date(b.createdAt).getTime();
-                  return dateB - dateA; // descending: most recent first
-                })
                 ?.map((item) => (
-                  // <View
-                  //   key={item._id}
-                  //   style={{
-                  //     borderColor: "gray",
-                  //     borderWidth: 1,
-                  //     borderRadius: 10,
-                  //     paddingVertical: 6,
-                  //     paddingHorizontal: 10,
-                  //     marginBottom: 10,
-                  //   }}
-                  // >
-                  //   <Text
-                  //     style={{
-                  //       fontSize: 16,
-                  //       fontWeight: "bold",
-                  //       marginVertical: 10,
-                  //     }}
-                  //   >
-                  //     {item.name}
-                  //   </Text>
-                  //   <Text>
-                  //     <Rating rating={item.rating} caption=" "></Rating>
-                  //   </Text>
-                  //   <Text>{item.createdAt.substring(0, 10)}</Text>
-                  //   {item.title && <Text>{item.title}</Text>}
-                  //   <Text>{item.comment}</Text>
-                  // </View>
                   <View
                     key={item._id}
                     style={{
-                      borderColor: "gray",
-                      borderWidth: 1,
-                      borderRadius: 10,
+                      flex: 1,
+                      borderBottomColor: "gray",
+                      borderBottomWidth: 1,
                       paddingVertical: 6,
                       paddingHorizontal: 10,
                       marginBottom: 10,
                     }}
                   >
-                    {userInfo?.profileImage ? (
-                      <Image
-                        source={{ uri: userInfo?.profileImage }}
-                        style={{
-                          width: 30,
-                          height: 30,
-                          borderRadius: 15,
-                          marginRight: 10,
-                        }}
-                      />
-                    ) : (
+                    <Link href={`/reviews/${product._id}`}>
                       <View
                         style={{
-                          width: 30,
-                          height: 30,
-                          borderRadius: 15,
-                          backgroundColor: "#318CE7",
-                          justifyContent: "center",
-                          alignItems: "center",
-                          marginRight: 10,
+                          flexDirection: "column",
+                          alignItems: "flex-start",
+                          position: "relative",
                         }}
                       >
-                        <Text style={{ color: "white", fontWeight: "bold" }}>
-                          {item.name[0]}
-                        </Text>
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            marginBottom: 6,
+                            gap: 10,
+                          }}
+                        >
+                          {userInfo?.profileImage ? (
+                            <Image
+                              source={{ uri: userInfo?.profileImage }}
+                              style={{
+                                width: 30,
+                                height: 30,
+                                borderRadius: 15,
+                                marginRight: 10,
+                              }}
+                            />
+                          ) : (
+                            <View
+                              style={{
+                                width: 30,
+                                height: 30,
+                                borderRadius: 15,
+                                backgroundColor: "#318CE7",
+                                justifyContent: "center",
+                                alignItems: "center",
+                                //marginRight: 10,
+                              }}
+                            >
+                              <Text
+                                style={{ color: "white", fontWeight: "bold" }}
+                              >
+                                {item.name[0]}
+                              </Text>
+                            </View>
+                          )}
+
+                          <Text style={{ fontWeight: "bold" }}>
+                            {item.name}
+                          </Text>
+
+                          <Text>{item.createdAt.substring(0, 10)}</Text>
+                        </View>
+
+                        <Rating rating={item.rating} caption=" " />
+
+                        <View style={{ marginTop: 10 }}>
+                          {item.title && <Text>{item.title}</Text>}
+                          <Text>{item.comment}</Text>
+                        </View>
                       </View>
-                    )}
-                    <Text style={{ fontWeight: "bold" }}>{item.name}</Text>
-                    <Text>
-                      <Rating rating={item.rating} caption=" "></Rating>
-                    </Text>
-                    <Text>{item.createdAt.substring(0, 10)}</Text>
-                    {item.title && <Text>{item.title}</Text>}
-                    <Text>{item.comment}</Text>
+                    </Link>
                   </View>
                 ))}
-          {product.reviews.length > 5 && (
-            <View>
-              <TouchableOpacity
-                style={{
-                  backgroundColor: "#ff9900",
-                  padding: 15,
-                  borderRadius: 5,
-                  alignItems: "center",
-                }}
-                onPress={() => router.navigate(`/reviews/${product._id}`)}
-              >
-                <Text
-                  style={{
-                    color: "white",
-                    fontWeight: "bold",
-                    fontSize: 18,
-                  }}
-                >
-                  More Reviews
-                </Text>
-              </TouchableOpacity>
             </View>
-          )}
+          </View>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+      {/* Stock and Add to Cart */}
+      {product.countInStock > 0 && displayProdAdjumentButtons ? (
+        <View style={styles.specialButtonsContainer}>
+          <View style={styles.adjustmentButtonsContainer}>
+            <TouchableOpacity
+              style={styles.adjustmentButton}
+              onPress={() => updateCartHandler("minus")}
+            >
+              <Text style={styles.signInText}>&minus;</Text>
+            </TouchableOpacity>
+            <Text style={styles.signInText}>{productQtyInCart}</Text>
+            <TouchableOpacity
+              style={styles.adjustmentButton}
+              onPress={() => updateCartHandler("plus")}
+            >
+              <Text style={styles.signInText}>&#43;</Text>
+            </TouchableOpacity>
+          </View>
+          <TouchableOpacity
+            style={styles.addToCartButton}
+            onPress={addToCartHandler}
+          >
+            <Link href="/cart">
+              <Text style={styles.addToCartButtonText}>Go To Cart</Text>
+            </Link>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <View
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <TouchableOpacity
+            style={styles.addNewProductToCartButton}
+            onPress={addToCartHandler}
+          >
+            <Text style={styles.addToCartButtonText}>
+              {product.discount
+                ? "-" + product.discount + "% now!" + " Add to cart!"
+                : "Add to cart!"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+      <TouchableOpacity
+        ref={cartIconRef}
+        onLayout={(event) => {
+          cartIconLayout.current = event.nativeEvent.layout;
+        }}
+        style={{
+          position: "absolute",
+          //top: 30,
+          bottom: 120,
+          right: 20,
+          zIndex: 10,
+        }}
+      >
+        <View style={styles.outerConcentricCircle}>
+          <View style={styles.innerConcentricCircle}>
+            {cartItemsCount > 0 && (
+              <Badge
+                value={cartItemsCount}
+                containerStyle={{
+                  position: "absolute",
+                  top: -5,
+                  right: 5,
+                }}
+              />
+            )}
+            <Animated.View style={{ transform: [{ scale: cartScale }] }}>
+              <Link href="/cart">
+                <Ionicons name="cart-outline" size={30} color="green" />
+              </Link>
+            </Animated.View>
+            <Text
+              style={{
+                color: "green",
+                fontWeight: "bold",
+                fontSize: 12,
+                marginBottom: 5,
+              }}
+            >
+              Cart
+            </Text>
+          </View>
+        </View>
+        <View style={styles.cartLabel}>
+          <Text style={styles.cartText}>Free shipping</Text>
+        </View>
+      </TouchableOpacity>
+      {showFlyImage && (
+        <Animated.Image
+          source={{ uri: product.image }}
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: 30,
+            position: "absolute",
+            zIndex: 100,
+            transform: animatedValue.getTranslateTransform(),
+          }}
+        />
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  input: {
-    borderWidth: 3,
-    borderColor: "#ccc",
-    borderRadius: 10,
-    padding: 10,
-    marginRight: 10,
-    fontSize: 16,
-    marginBottom: 8,
+  discountViewPlusCountdown: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 4,
+    height: 20,
+    width: "100%",
+    justifyContent: "flex-start",
+    gap: 8,
   },
-  title: {
-    fontSize: 20,
+  discountedPriceContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F8921B",
+    paddingHorizontal: 4,
+    height: "100%",
+  },
+  saveText: {
+    color: "white",
+    fontWeight: "600",
+    fontSize: 12,
+    marginRight: 4,
+  },
+  nairaSymbolInDisc: {
+    color: "white",
+    fontWeight: "600",
+    fontSize: 10,
+    marginRight: 2,
+  },
+  discountedPrice: {
+    color: "white",
+    fontWeight: "600",
+    fontSize: 10,
+    marginRight: 4,
+  },
+  discountPromoContainer: {
+    paddingVertical: 2,
+    paddingHorizontal: 5,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: "#F8921B",
+    flexDirection: "row",
+  },
+  discountPromoText: {
+    color: "#F8921B",
     fontWeight: "bold",
   },
-  saveButton: {
-    backgroundColor: "green",
-    width: "45%",
-    borderRadius: 12,
-    padding: 12,
-    display: "flex",
+  nairaSymbol: {
+    color: "#F8921B",
+    fontWeight: "600",
+    fontSize: 12,
+    marginRight: 2,
+  },
+  productImageBanner: {
+    // width: "100%",
+    height: 30,
+    paddingVertical: 3,
+    backgroundColor: "#ffd580",
+    paddingHorizontal: 10,
+    flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 12,
+  },
+  productImageBannerText: {
+    fontSize: 12,
+    fontWeight: "bold",
+  },
+  productImageBannerMiddle: {
+    width: 1,
+    height: "90%",
+    backgroundColor: "black",
+    marginHorizontal: 5,
+  },
+  productImageBannerInner: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
 
-  cancelButton: {
-    backgroundColor: "red",
+  addToCartButton: {
+    backgroundColor: "#ff9900",
+    padding: 15,
+    borderRadius: 15,
+    alignItems: "center",
     width: "45%",
-    borderRadius: 12,
-    padding: 12,
+  },
+
+  outerConcentricCircle: {
+    width: 70,
+    height: 70,
+    borderRadius: 50,
+    backgroundColor: "green",
+    justifyContent: "center",
+    alignItems: "center",
+    position: "relative",
+  },
+  innerConcentricCircle: {
+    width: 58,
+    height: 58,
+    borderRadius: 50,
+    backgroundColor: "white",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  cartLabel: {
+    position: "absolute",
+    bottom: -5,
+    right: 3,
+    backgroundColor: "green",
+    padding: 3,
+    borderRadius: 8,
+  },
+  cartText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 10,
+  },
+  specialButtonsContainer: {
+    position: "absolute",
+    left: 10,
+    bottom: 30,
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 10,
+  },
+  adjustmentButtonsContainer: {
+    backgroundColor: "#ff9900",
+    padding: 8,
+    borderRadius: 15,
+    width: "45%",
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  adjustmentButton: {
+    borderWidth: 2,
+
+    borderColor: "white",
+    height: 40,
+    width: 40,
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 12,
+    borderRadius: 50,
+    padding: 5,
   },
-  dropdownButtonStyle: {
-    width: 200,
-    height: 50,
-    backgroundColor: "#E9ECEF",
-    borderRadius: 12,
-    flexDirection: "row",
+  signInText: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "white",
+  },
+  addToCartButtonText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 18,
+  },
+  addNewProductToCartButton: {
+    position: "absolute",
+    bottom: 20,
+    width: "80%",
+    marginHorizontal: "auto",
+    backgroundColor: "#ff9900",
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 25,
+    alignItems: "center",
+  },
+
+  shippingScrollViewItem: {
+    backgroundColor: "green",
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 12,
+    paddingVertical: 2,
+    paddingHorizontal: 4,
+    borderRadius: 3,
   },
-  dropdownButtonTxtStyle: {
-    flex: 1,
-    fontSize: 18,
-    fontWeight: "500",
-    color: "#151E26",
-  },
-  dropdownButtonArrowStyle: {
-    fontSize: 28,
-  },
-  dropdownButtonIconStyle: {
-    fontSize: 28,
-    marginRight: 8,
-  },
-  dropdownMenuStyle: {
-    backgroundColor: "#E9ECEF",
-    borderRadius: 8,
-  },
-  dropdownItemStyle: {
-    width: "100%",
-    flexDirection: "row",
-    paddingHorizontal: 12,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: 8,
-  },
-  dropdownItemTxtStyle: {
-    flex: 1,
-    fontSize: 18,
-    fontWeight: "500",
-    color: "#151E26",
-  },
-  dropdownItemIconStyle: {
-    fontSize: 28,
-    marginRight: 8,
+  shippingScrollViewItemText: {
+    color: "white",
+    fontSize: 12,
+    fontWeight: "bold",
   },
 });

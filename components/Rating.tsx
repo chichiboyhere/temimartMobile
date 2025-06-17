@@ -52,7 +52,7 @@ function Rating(props: {
       {caption ? (
         <Text>{caption}</Text>
       ) : numReviews != 0 ? (
-        <Text style={{ fontSize: 12 }}> {numReviews}</Text>
+        <Text style={{ fontSize: 12 }}>({numReviews}) </Text>
       ) : (
         ""
       )}

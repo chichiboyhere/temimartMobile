@@ -20,4 +20,6 @@ export type Product = {
   rating: number;
   reviews: Review[];
   numReviews: number;
+  discount?: number;
+  numSold?: number;
 };

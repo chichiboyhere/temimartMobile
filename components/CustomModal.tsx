@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
     position: "relative",
   },
   button: {
-    backgroundColor: "#0066ff",
+    backgroundColor: "green",
     paddingVertical: 15,
     paddingHorizontal: 30,
     borderRadius: 25,

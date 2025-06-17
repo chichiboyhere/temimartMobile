@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -14,11 +14,15 @@ import { CartItem } from "@/types/Cart";
 
 const Cart = () => {
   const { state, dispatch: ctxDispatch } = useContext(Store);
+  const [numItemsInCart, setNumItemsInCart] = useState(0);
   const {
     cart: { cartItems },
     userInfo,
   } = state;
 
+  useEffect(() => {
+    setNumItemsInCart(cartItems.reduce((a, c) => a + c.quantity, 0));
+  });
   const getTotalPrice = () => {
     return cartItems
       .reduce((total, item) => total + item.price * item.quantity, 0)
@@ -54,8 +58,15 @@ const Cart = () => {
 
   return (
     <View style={{ flex: 1, padding: 15, backgroundColor: "#fff" }}>
-      <Text style={{ fontSize: 24, fontWeight: "bold", marginBottom: 10 }}>
-        Your Cart
+      <Text
+        style={{
+          fontSize: 24,
+          fontWeight: "bold",
+          marginBottom: 10,
+          textAlign: "center",
+        }}
+      >
+        Cart ({numItemsInCart} items)
       </Text>
 
       {cartItems.length === 0 ? (
@@ -90,7 +101,7 @@ const Cart = () => {
                     {item.name}
                   </Text>
                   <Text style={{ fontSize: 16, color: "green" }}>
-                    ${item.price}
+                    &#x20A6; {item.price}
                   </Text>
 
                   {/* Quantity Controls */}
@@ -147,7 +158,7 @@ const Cart = () => {
           {/* Total and Checkout */}
           <View style={{ marginTop: 20 }}>
             <Text style={{ fontSize: 20, fontWeight: "bold" }}>
-              Total: ${getTotalPrice()}
+              Total: &#x20A6; {getTotalPrice()}
             </Text>
             <TouchableOpacity
               style={{

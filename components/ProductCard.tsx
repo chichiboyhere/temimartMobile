@@ -11,18 +11,8 @@ import {
 import { Link } from "expo-router";
 import Rating from "./Rating";
 import { Ionicons } from "@expo/vector-icons";
-
-interface Product {
-  _id: string;
-  name: string;
-  slug: string;
-  image: string;
-  price: number;
-  rating: number;
-  numReviews: number;
-  discount?: number;
-  numSold?: number;
-}
+import { Product } from "@/types/Product";
+import CountdownTimer from "./CountdownTimer";
 
 interface Props {
   item: Product;
@@ -36,7 +26,7 @@ const ProductCard: React.FC<Props> = ({ item, onAddToCart }) => {
     useState(0);
   const [disCountInFigures, setDisCountInFigures] = useState(0);
   const [newPrice, setNewPrice] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(12 * 60 * 60); // 12 hours in seconds
+
   let quantitySold = 0;
 
   useEffect(() => {
@@ -67,59 +57,6 @@ const ProductCard: React.FC<Props> = ({ item, onAddToCart }) => {
       setNewPrice(newPrice);
     }
   }, [item.discount]);
-
-  // useEffect(() => {
-  //   function twelveHourCountDownTimer() {
-  //     const now = new Date();
-  //     const targetTime = new Date(
-  //       now.getFullYear(),
-  //       now.getMonth(),
-  //       now.getDate(),
-  //       12,
-  //       0,
-  //       0,
-  //       0
-  //     );
-  //     const timeDifference = targetTime.getTime() - now.getTime();
-  //     const seconds = Math.floor(timeDifference / 1000);
-  //     const minutes = Math.floor(seconds / 60);
-  //     const hours = Math.floor(minutes / 60);
-  //     const remainingSeconds = seconds % 60;
-  //     const remainingMinutes = minutes % 60;
-  //     const remainingHours = hours % 24;
-  //     const formattedTime = `${remainingHours
-  //       .toString()
-  //       .padStart(2, "0")}:${remainingMinutes
-  //       .toString()
-  //       .padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
-  //     return formattedTime;
-  //   } // Initialize the countDownTimer
-  //   twelveHourCountDownTimer();
-  // }, []);
-  useEffect(() => {
-    if (!item.discount) return;
-
-    const interval = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval); // Clean up on unmount
-  }, [item.discount]);
-
-  const formatTime = (seconds: number) => {
-    const hrs = Math.floor(seconds / 3600);
-    const mins = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    return `${hrs.toString().padStart(2, "0")}:${mins
-      .toString()
-      .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-  };
 
   return (
     <Animated.View style={[styles.productItem, { opacity: fadeAnim }]}>
@@ -158,15 +95,12 @@ const ProductCard: React.FC<Props> = ({ item, onAddToCart }) => {
                   <Text style={styles.saveText}>Save</Text>
                   <Text style={styles.nairaSymbolInDisc}>&#x20A6;</Text>
                   <Text style={styles.discountedPrice}>
-                    {disCountInFigures}
+                    {disCountInFigures?.toFixed?.(0) || "0"}
                   </Text>
                   <Text style={styles.saveText}>extra</Text>
                 </View>
-                <View style={styles.countDownTimerContainer}>
-                  <Text style={styles.countDownTimerText}>
-                    {formatTime(timeLeft)}
-                  </Text>
-                </View>
+
+                <CountdownTimer item={item} color="red" />
               </View>
             )}
 
@@ -181,7 +115,7 @@ const ProductCard: React.FC<Props> = ({ item, onAddToCart }) => {
 
               {item.numSold && item.numSold >= 1000 ? (
                 <Text style={styles.numSoldStyle}>
-                  <Ionicons name="flame-sharp" size={12} color="red" />
+                  🔥
                   {quantitySoldInThousands}k sold
                 </Text>
               ) : item.numSold && item.numSold < 1000 && item.numSold > 0 ? (
@@ -296,17 +230,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     marginRight: 4,
   },
-  countDownTimerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    height: "100%",
-  },
-  countDownTimerText: {
-    fontSize: 12,
-    fontWeight: "600",
-    paddingHorizontal: 6,
-    color: "#D32F2F",
-  },
+
   nairaSymbol: {
     color: "#F8921B",
     fontWeight: "600",

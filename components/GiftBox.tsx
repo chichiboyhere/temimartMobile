@@ -102,7 +102,7 @@ const GiftBox: React.FC<GiftBoxViewProps> = (props) => {
     const pulse = Animated.loop(
       Animated.sequence([
         Animated.timing(scaleAnim, {
-          toValue: 1.25,
+          toValue: 1.2,
           duration: 750,
           useNativeDriver: true,
         }),
@@ -195,7 +195,7 @@ const GiftBox: React.FC<GiftBoxViewProps> = (props) => {
           props.style,
 
           {
-            overflow: "hidden",
+            // overflow: "hidden",
             transform: [
               { scale: scaleAnim },
               ...(isCircular ? [] : [{ translateX: translateAnim }]),
@@ -214,10 +214,7 @@ const GiftBox: React.FC<GiftBoxViewProps> = (props) => {
             ]}
           />
         )}
-
-        <Link href="/profile">
-          <Text style={styles.text}>Free</Text>
-        </Link>
+        {props.children}
       </Animated.View>
     </View>
   );
@@ -244,7 +241,7 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     borderWidth: 5,
     borderColor: "white",
-    zIndex: -1,
+    zIndex: 1,
   },
   planeWave: {
     position: "absolute",
