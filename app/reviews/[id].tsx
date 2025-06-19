@@ -4,8 +4,8 @@ import { getError } from "@/utils";
 import { ApiError } from "@/types/ApiError";
 import { useGetProductByIdQuery } from "../hooks/productHooks";
 import ReviewFormat from "@/components/ReviewFormat";
-import { Review } from "@/types/Product";
-
+//import { Review } from "@/types/Product";
+import { Review } from "../types/Review";
 const Reviews = () => {
   const { id: productId } = useLocalSearchParams();
 

@@ -24,7 +24,6 @@ import { Picker } from "@react-native-picker/picker";
 // };
 
 type ReviewData = {
-  title: string;
   comment: string;
   rating: string | number;
 };
@@ -34,7 +33,6 @@ type HandleReviewSubmit = {
 };
 
 type ReviewProp = {
-  title: string | undefined;
   rating: number | undefined;
   comment: string | undefined;
 };
@@ -43,19 +41,17 @@ const ReviewFormModal: React.FC<
   HandleReviewSubmit & { review?: ReviewProp }
 > = ({ onSubmitReview, review }) => {
   const [modalVisible, setModalVisible] = useState(false);
-  const [title, setTitle] = useState("");
+
   const [comment, setComment] = useState("");
   const [rating, setRating] = useState<number | null>(null);
   const [slideAnim] = useState(new Animated.Value(0));
   const [errors, setErrors] = useState<{
-    title?: string;
     comment?: string;
     rating?: string;
   }>({});
 
   useEffect(() => {
     if (review) {
-      setTitle(review.title || "");
       setComment(review.comment || "");
       setRating(review.rating || null);
     }
@@ -79,7 +75,7 @@ const ReviewFormModal: React.FC<
       useNativeDriver: true,
     }).start(() => {
       setModalVisible(false);
-      setTitle("");
+
       setComment("");
       setRating(null);
       setErrors({});
@@ -88,11 +84,10 @@ const ReviewFormModal: React.FC<
 
   const validate = () => {
     const newErrors: {
-      title?: string;
       comment?: string;
       rating?: string;
     } = {};
-    if (title.trim() === "") newErrors.title = "Title is required";
+
     if (comment.trim() === "") newErrors.comment = "Comment is required";
     if (rating === null || rating === undefined)
       newErrors.rating = "Rating is required";
@@ -103,8 +98,8 @@ const ReviewFormModal: React.FC<
 
   const handleSubmit = () => {
     if (validate()) {
-      onSubmitReview({ title, comment, rating });
-      console.log("Review submitted:", { title, comment, rating });
+      onSubmitReview({ comment, rating });
+      console.log("Review submitted:", { comment, rating });
       closeModal();
     }
   };
@@ -151,19 +146,6 @@ const ReviewFormModal: React.FC<
               keyboardShouldPersistTaps="handled"
               style={{ width: "100%" }}
             >
-              <Text style={styles.label}>Title</Text>
-              <TextInput
-                style={[styles.input, errors.title && styles.inputError]}
-                onChangeText={setTitle}
-                value={title}
-                placeholder="Review title"
-                placeholderTextColor="#999"
-                maxLength={50}
-              />
-              {errors.title && (
-                <Text style={styles.errorText}>{errors.title}</Text>
-              )}
-
               <Text style={styles.label}>Comment</Text>
               <TextInput
                 style={[styles.textArea, errors.comment && styles.inputError]}

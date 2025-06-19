@@ -23,7 +23,8 @@ import * as Haptics from "expo-haptics";
 import { Audio } from "expo-av";
 
 import axios from "axios";
-import { Product } from "./types/Product";
+//import { Product } from "./types/Product";
+import { Product } from "@/types/Product";
 import { CartItem } from "./types/Cart";
 import { Link, useRouter, useLocalSearchParams } from "expo-router";
 import { RouteProp, useRoute } from "@react-navigation/native";
@@ -42,6 +43,8 @@ import ReviewFormModal from "@/components/CustomModal";
 import { format, addDays } from "date-fns";
 import Icon from "react-native-vector-icons/FontAwesome";
 
+import { Review } from "./types/Review";
+import ReviewList from "@/components/ReviewList";
 type Action =
   | { type: "REFRESH_PRODUCT"; payload: Product }
   | { type: "CREATE_REQUEST" }
@@ -71,7 +74,6 @@ export default function ProductDetailScreen() {
   const { cart, userInfo } = state;
 
   const [currentUserExistingReview, setCurrentUserExistingReview] = useState<{
-    title?: string | undefined;
     comment?: string | undefined;
     rating?: number | undefined;
   }>({});
@@ -84,6 +86,10 @@ export default function ProductDetailScreen() {
 
   const [productQtyInCart, setProductQtyInCart] = useState(0);
 
+  const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [likedBy, setLikedBy] = useState<string[]>([]);
+
   const flyImageRef = useRef(null);
   const cartIconRef = useRef(null);
 
@@ -95,7 +101,6 @@ export default function ProductDetailScreen() {
   const [newPrice, setNewPrice] = useState(0);
 
   type ReviewProp = {
-    title: string | undefined;
     rating: number | undefined;
     comment: string | undefined;
   };
@@ -130,13 +135,13 @@ export default function ProductDetailScreen() {
       );
 
       if (currentUserReview) {
-        const { title, comment, rating } = currentUserReview;
-        setCurrentUserExistingReview({ title, comment, rating });
+        const { comment, rating } = currentUserReview;
+        setCurrentUserExistingReview({ comment, rating });
       } else {
         setCurrentUserExistingReview({});
       }
     }
-    console.log("Current user data", currentUserExistingReview);
+    // console.log("Current user data", currentUserExistingReview);
   }, [product?.reviews, userInfo]);
 
   useEffect(() => {
@@ -222,12 +227,6 @@ export default function ProductDetailScreen() {
     await sound.playAsync();
   };
 
-  const getOneWeekFromNowHandler = () => {
-    const oneWeekFromNow = new Date();
-    oneWeekFromNow.setDate(oneWeekFromNow.getDate() + 7);
-    return oneWeekFromNow;
-  };
-
   const getDeliveryDate = () => {
     const now = new Date();
     const nextWeek = addDays(now, 7);
@@ -290,41 +289,39 @@ export default function ProductDetailScreen() {
   };
 
   const submit = async ({
-    title,
     comment,
     rating,
   }: {
-    title: string;
     comment: string;
     rating: string | number;
   }) => {
-    if (!title || !comment || !rating) {
-      console.log("Review at details page", { title, comment, rating });
+    if (!comment || !rating) {
+      console.log("Review at details page", { comment, rating });
       Alert.alert("Blank Field(s)", "Please fill in all the fields");
       return;
     }
     try {
+      // Filter out the old review of the user
+      let remainingReviews = product.reviews.filter(
+        (review) => review.name !== userInfo!.name
+      );
+
+      dispatch({ type: "REFRESH_PRODUCT", payload: product });
+      console.log("Remaining reviews", remainingReviews);
       const { data } = await axios.post(
         `https://temimartapi.onrender.com/api/products/${product._id}/reviews`,
-        { rating, title, comment, name: userInfo!.name },
+        { rating, comment, name: userInfo!.name },
         {
           headers: { Authorization: `Bearer ${userInfo!.token}` },
         }
       );
 
-      if (data.review in product.reviews) {
-        const rem = product.reviews.splice(
-          product.reviews.indexOf(data.review),
-          1
-        );
-        console.log("Removed Review:", rem);
-      }
-
       dispatch({ type: "CREATE_SUCCESS" });
 
       if (!product.reviews) product.reviews = [];
-      console.log("New Review:", data.review);
-
+      // console.log("New Review:", data.review);
+      // Render new review at the top of the remaining reviews after the removed review
+      product.reviews = [...remainingReviews];
       product.reviews.unshift(data.review);
       product.numReviews = data.numReviews;
       product.rating = data.rating;
@@ -345,6 +342,30 @@ export default function ProductDetailScreen() {
       }
     }
   };
+
+  // const handleLike = async (reviewId: string) => {
+  //   let review: Review;
+  //   review = product.reviews.find((x) => x._id === reviewId) as Review;
+  //   setLiked(!liked);
+
+  //   if (!liked) {
+  //     console.log("I like the review ", reviewId);
+  //     console.log("Cool review from ", review.name);
+  //   } else {
+  //     console.log("I don't like the review ", reviewId);
+  //     console.log("Not so cool review from ", review.name);
+
+  //     // const { data } = await axios.post(
+  //     //   `https://temimartapi.onrender.com/api/products/${product._id}/reviews/${reviewId}`,
+  //     //   { unliked: !liked, name: userInfo!.name },
+  //     //   { headers: { Authorization: `Bearer ${userInfo!.token}` } }
+  //     // );
+  //     // setLiked(false);
+  //     // review.numOfLikes = data.numOfLikes;
+  //     // setLikeCount(data.numOfLikes);
+  //     // setLikedBy(likedBy.filter((x) => x !== userInfo!.name));
+  //   }
+  // };
 
   return isLoading ? (
     <ActivityIndicator size="large" color="#0000ff" style={{ marginTop: 50 }} />
@@ -423,7 +444,7 @@ export default function ProductDetailScreen() {
               </Text>
             </View>
 
-            <View style={{ display: "flex", flexDirection: "row" }}>
+            <View style={{ display: "flex", flexDirection: "row", gap: 4 }}>
               <View>
                 <Text style={{ fontSize: 10 }}>
                   {product.rating && product.rating.toFixed(1)}
@@ -503,7 +524,7 @@ export default function ProductDetailScreen() {
               gap: 6,
             }}
           >
-            <Icon name="bus" color={"green"} size={16} />
+            <Icon name="ship" color={"green"} size={16} />
             <Text style={{ color: "green", fontSize: 15, fontWeight: "600" }}>
               Free shipping on all orders
             </Text>
@@ -573,7 +594,7 @@ export default function ProductDetailScreen() {
             <View
               style={{ flexDirection: "row", gap: 5, alignItems: "center" }}
             >
-              <Icon name="list" size={16} color="green" />
+              <Ionicons name="bag-check" size={16} color="green" />
               <Text style={{ fontSize: 14, color: "green" }}>
                 Order guarantee
               </Text>
@@ -632,59 +653,114 @@ export default function ProductDetailScreen() {
               </View>
             </View>
           </ScrollView>
-          <View>
-            {userInfo ? (
-              <View>
-                <ReviewFormModal
-                  onSubmitReview={submit}
-                  review={currentUserExistingReview}
-                />
-              </View>
-            ) : (
+          {/* Reviews */}
+
+          {product.reviews && product.reviews.length > 0 && (
+            <>
               <View
                 style={{
-                  display: "flex",
+                  marginTop: 19,
                   flexDirection: "row",
-                  marginBottom: 25,
+                  justifyContent: "space-between",
                 }}
               >
-                <Text
+                <View
                   style={{
-                    color: "blue",
-                    textDecorationLine: "underline",
-                    fontWeight: "bold",
-                    fontSize: 18,
+                    display: "flex",
+                    flexDirection: "row",
+                    gap: 5,
+                    alignItems: "center",
                   }}
                 >
-                  <Link href="/signin">Sign in </Link>
-                </Text>
-                <Text
-                  style={{
-                    fontSize: 18,
-                  }}
-                >
-                  to leave a review
-                </Text>
+                  <Text style={{ fontSize: 18, fontWeight: "bold" }}>
+                    {product.rating && product.rating.toFixed(1)}
+                  </Text>
+
+                  {product.rating && (
+                    <Rating rating={product.rating} caption=" " size={18} />
+                  )}
+                  {product.numReviews && (
+                    <Text style={{ fontSize: 18, fontWeight: "bold" }}>
+                      ({product.numReviews})
+                    </Text>
+                  )}
+                  <Ionicons
+                    name="help-circle-outline"
+                    size={18}
+                    color="#F8921B"
+                  />
+                </View>
+                <Icon name="caret-right" size={20} color="gray" />
               </View>
+              <View
+                style={{
+                  marginTop: 15,
+                  display: "flex",
+                  flexDirection: "row",
+                  justifyContent: "flex-start",
+                  backgroundColor: "rgba(144, 238, 144, 0.3)",
+                  alignItems: "center",
+                  height: 60,
+                  borderColor: "green",
+                  borderWidth: 1,
+                  borderRadius: 5,
+                  width: "100%",
+                }}
+              >
+                <View
+                  style={{
+                    backgroundColor: "green",
+                    height: 60,
+                    width: 60,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderTopLeftRadius: 5,
+                    borderBottomLeftRadius: 5,
+                  }}
+                >
+                  <Ionicons name="shield" size={30} color="white" />
+                  <Icon
+                    name="user"
+                    size={14}
+                    color="green"
+                    style={{ position: "absolute", left: 25, top: 22 }}
+                  />
+                </View>
+                <View
+                  style={{
+                    gap: 1,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 22,
+                      fontWeight: "bold",
+                      color: "green",
+                      marginLeft: 10,
+                    }}
+                  >
+                    Reviews
+                  </Text>
+                  <Text
+                    style={{ fontSize: 12, color: "green", marginLeft: 10 }}
+                  >
+                    All reviews are from verified purchasers
+                  </Text>
+                </View>
+              </View>
+            </>
+          )}
+          <View style={{ marginBottom: 10 }}>
+            {product.reviews.length === 0 && (
+              <Text style={{ fontStyle: "italic", color: "gray" }}>
+                No reviews yet. Be the first to leave one!
+              </Text>
             )}
           </View>
 
           <View style={{ marginBottom: 20 }}>
-            <Text
-              style={{ fontSize: 24, fontWeight: "bold", marginVertical: 10 }}
-            >
-              Reviews
-            </Text>
-
-            <View style={{ marginBottom: 10 }}>
-              {product.reviews.length === 0 && (
-                <Text style={{ fontStyle: "italic", color: "gray" }}>
-                  No reviews yet. Be the first to leave one!
-                </Text>
-              )}
-            </View>
-
-            <View>
+            <ReviewList product={product} userInfo={userInfo} />
+            {/* <View>
               {product.reviews
                 .sort((a, b) => {
                   const dateA = new Date(a.createdAt).getTime();
@@ -759,13 +835,82 @@ export default function ProductDetailScreen() {
                         <Rating rating={item.rating} caption=" " />
 
                         <View style={{ marginTop: 10 }}>
-                          {item.title && <Text>{item.title}</Text>}
                           <Text>{item.comment}</Text>
+                        </View>
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            gap: 4,
+
+                            alignItems: "center",
+                          }}
+                        >
+                          <Text style={{ fontSize: 12, fontWeight: "700" }}>
+                            Helpful?
+                          </Text>
+                          <TouchableOpacity
+                            onPress={() => handleLike(item._id)}
+                          >
+                            {liked ? (
+                              <Ionicons
+                                name="thumbs-up-sharp"
+                                size={20}
+                                color="red"
+                              />
+                            ) : (
+                              <Ionicons
+                                name="thumbs-up-outline"
+                                size={20}
+                                color="red"
+                              />
+                            )}
+                            {likeCount > 0 && (
+                              <Text style={{ fontSize: 12, color: "red" }}>
+                                {likeCount}
+                              </Text>
+                            )}
+                          </TouchableOpacity>
                         </View>
                       </View>
                     </Link>
                   </View>
                 ))}
+            </View> */}
+            <View>
+              {userInfo ? (
+                <View style={{ marginBottom: 25 }}>
+                  <ReviewFormModal
+                    onSubmitReview={submit}
+                    review={currentUserExistingReview}
+                  />
+                </View>
+              ) : (
+                <View
+                  style={{
+                    display: "flex",
+                    flexDirection: "row",
+                    marginBottom: 25,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: "blue",
+                      textDecorationLine: "underline",
+                      fontWeight: "bold",
+                      fontSize: 18,
+                    }}
+                  >
+                    <Link href="/signin">Sign in </Link>
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: 18,
+                    }}
+                  >
+                    to leave a review
+                  </Text>
+                </View>
+              )}
             </View>
           </View>
         </View>

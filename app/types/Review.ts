@@ -3,5 +3,7 @@ export type Review = {
   name: string;
   rating: number;
   comment: string;
+  likedBy: string[];
+  numOfLikes: number;
   createdAt: string;
 };

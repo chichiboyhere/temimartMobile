@@ -5,48 +5,95 @@ function Rating(props: {
   rating: number;
   numReviews?: number;
   caption?: string;
+  size?: number;
 }) {
-  const { rating, numReviews, caption } = props;
+  const { rating, numReviews, caption, size } = props;
   return (
-    <View style={{ display: "flex", flexDirection: "row" }}>
+    <View
+      style={{
+        display: "flex",
+        flexDirection: "row",
+        alignItems: "center",
+      }}
+    >
       {rating >= 1 ? (
-        <Ionicons name={"star-sharp"} color={"black"} size={12} />
+        <Ionicons name={"star-sharp"} color={"black"} size={size ? size : 12} />
       ) : rating >= 0.5 ? (
-        <Ionicons name={"star-half-outline"} color={"black"} size={12} />
+        <Ionicons
+          name={"star-half-outline"}
+          color={"black"}
+          size={size ? size : 12}
+        />
       ) : (
-        <Ionicons name={"star-outline"} color={"black"} size={12} />
+        <Ionicons
+          name={"star-outline"}
+          color={"black"}
+          size={size ? size : 12}
+        />
       )}
 
       {rating >= 2 ? (
-        <Ionicons name={"star-sharp"} color={"black"} size={12} />
+        <Ionicons name={"star-sharp"} color={"black"} size={size ? size : 12} />
       ) : rating >= 1.5 ? (
-        <Ionicons name={"star-half-outline"} color={"black"} size={12} />
+        <Ionicons
+          name={"star-half-outline"}
+          color={"black"}
+          size={size ? size : 12}
+        />
       ) : (
-        <Ionicons name={"star-outline"} color={"black"} size={12} />
+        <Ionicons
+          name={"star-outline"}
+          color={"black"}
+          size={size ? size : 12}
+        />
       )}
 
       {rating >= 3 ? (
-        <Ionicons name={"star-sharp"} color={"black"} size={12} />
+        <Ionicons name={"star-sharp"} color={"black"} size={size ? size : 12} />
       ) : rating >= 2.5 ? (
-        <Ionicons name={"star-half-outline"} color={"black"} size={12} />
+        <Ionicons
+          name={"star-half-outline"}
+          color={"black"}
+          size={size ? size : 12}
+        />
       ) : (
-        <Ionicons name={"star-outline"} color={"black"} size={12} />
+        <Ionicons
+          name={"star-outline"}
+          color={"black"}
+          size={size ? size : 12}
+        />
       )}
 
       {rating >= 4 ? (
-        <Ionicons name={"star-sharp"} color={"black"} size={12} />
+        <Ionicons name={"star-sharp"} color={"black"} size={size ? size : 12} />
       ) : rating >= 3.5 ? (
-        <Ionicons name={"star-half-outline"} color={"black"} size={12} />
+        <Ionicons
+          name={"star-half-outline"}
+          color={"black"}
+          size={size ? size : 12}
+        />
       ) : (
-        <Ionicons name={"star-outline"} color={"black"} size={12} />
+        <Ionicons
+          name={"star-outline"}
+          color={"black"}
+          size={size ? size : 12}
+        />
       )}
 
       {rating >= 5 ? (
-        <Ionicons name={"star-sharp"} color={"black"} size={12} />
+        <Ionicons name={"star-sharp"} color={"black"} size={size ? size : 12} />
       ) : rating >= 4.5 ? (
-        <Ionicons name={"star-half-outline"} color={"black"} size={12} />
+        <Ionicons
+          name={"star-half-outline"}
+          color={"black"}
+          size={size ? size : 12}
+        />
       ) : (
-        <Ionicons name={"star-outline"} color={"black"} size={12} />
+        <Ionicons
+          name={"star-outline"}
+          color={"black"}
+          size={size ? size : 12}
+        />
       )}
 
       {caption ? (
