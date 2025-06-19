@@ -66,7 +66,7 @@ const Cart = () => {
           textAlign: "center",
         }}
       >
-        Cart ({numItemsInCart} items)
+        Cart ({numItemsInCart} {numItemsInCart === 1 ? "item" : "items"} )
       </Text>
 
       {cartItems.length === 0 ? (

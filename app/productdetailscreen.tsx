@@ -15,8 +15,11 @@ import {
   Alert,
   Animated,
   StyleSheet,
+  FlatList,
 } from "react-native";
 import { Badge } from "react-native-elements";
+
+import { useGetProductsQuery } from "@/hooks/productHooks";
 
 // For audio and vibration feedback when items are added to cart
 import * as Haptics from "expo-haptics";
@@ -31,6 +34,7 @@ import { RouteProp, useRoute } from "@react-navigation/native";
 import { Store } from "@/Store";
 import Rating from "@/components/Rating";
 import { Ionicons } from "@expo/vector-icons";
+import ProductCard from "@/components/ProductCard";
 
 //import SelectDropdown from "react-native-select-dropdown";
 import { useGetProductDetailsBySlugQuery } from "@/hooks/productHooks";
@@ -72,7 +76,11 @@ type ProductDetailRouteProp = RouteProp<
 export default function ProductDetailScreen() {
   const { state, dispatch: ctxDispatch } = useContext(Store);
   const { cart, userInfo } = state;
-
+  const {
+    data: products,
+    isLoading: loadingProds,
+    error: errorInLoadingProds,
+  } = useGetProductsQuery();
   const [currentUserExistingReview, setCurrentUserExistingReview] = useState<{
     comment?: string | undefined;
     rating?: number | undefined;
@@ -86,11 +94,6 @@ export default function ProductDetailScreen() {
 
   const [productQtyInCart, setProductQtyInCart] = useState(0);
 
-  const [liked, setLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(0);
-  const [likedBy, setLikedBy] = useState<string[]>([]);
-
-  const flyImageRef = useRef(null);
   const cartIconRef = useRef(null);
 
   const productImageLayout = useRef({ x: 0, y: 0 });
@@ -128,21 +131,21 @@ export default function ProductDetailScreen() {
     setProductQtyInCart(prodInCart ? prodInCart.quantity : 0);
   }, [cart.cartItems]);
 
-  useEffect(() => {
-    if (product?.reviews && userInfo?.name) {
-      const currentUserReview = product.reviews.find(
-        (review) => review.name === userInfo.name
-      );
+  // useEffect(() => {
+  //   if (product?.reviews && userInfo?.name) {
+  //     const currentUserReview = product.reviews.find(
+  //       (review) => review.name === userInfo.name
+  //     );
 
-      if (currentUserReview) {
-        const { comment, rating } = currentUserReview;
-        setCurrentUserExistingReview({ comment, rating });
-      } else {
-        setCurrentUserExistingReview({});
-      }
-    }
-    // console.log("Current user data", currentUserExistingReview);
-  }, [product?.reviews, userInfo]);
+  //     if (currentUserReview) {
+  //       const { comment, rating } = currentUserReview;
+  //       setCurrentUserExistingReview({ comment, rating });
+  //     } else {
+  //       setCurrentUserExistingReview({});
+  //     }
+  //   }
+  //   // console.log("Current user data", currentUserExistingReview);
+  // }, [product?.reviews, userInfo]);
 
   useEffect(() => {
     if (product?.reviews?.length) {
@@ -241,7 +244,7 @@ export default function ProductDetailScreen() {
     setDisplayProdAdjumentButtons(true);
     startFlyAnimation();
     Haptics.selectionAsync(); // Gentle haptic
-    //Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
     playAddToCartSound(); // Optional: add sound
 
     const existItem = cart.cartItems.find((x) => x._id === product?._id);
@@ -319,7 +322,7 @@ export default function ProductDetailScreen() {
       dispatch({ type: "CREATE_SUCCESS" });
 
       if (!product.reviews) product.reviews = [];
-      // console.log("New Review:", data.review);
+
       // Render new review at the top of the remaining reviews after the removed review
       product.reviews = [...remainingReviews];
       product.reviews.unshift(data.review);
@@ -343,29 +346,24 @@ export default function ProductDetailScreen() {
     }
   };
 
-  // const handleLike = async (reviewId: string) => {
-  //   let review: Review;
-  //   review = product.reviews.find((x) => x._id === reviewId) as Review;
-  //   setLiked(!liked);
+  const handleAddToCart = (product: Product) => {
+    const existItem = cart.cartItems.find((x) => x._id === product?._id);
+    const quantity = existItem ? existItem.quantity + 1 : 1;
 
-  //   if (!liked) {
-  //     console.log("I like the review ", reviewId);
-  //     console.log("Cool review from ", review.name);
-  //   } else {
-  //     console.log("I don't like the review ", reviewId);
-  //     console.log("Not so cool review from ", review.name);
-
-  //     // const { data } = await axios.post(
-  //     //   `https://temimartapi.onrender.com/api/products/${product._id}/reviews/${reviewId}`,
-  //     //   { unliked: !liked, name: userInfo!.name },
-  //     //   { headers: { Authorization: `Bearer ${userInfo!.token}` } }
-  //     // );
-  //     // setLiked(false);
-  //     // review.numOfLikes = data.numOfLikes;
-  //     // setLikeCount(data.numOfLikes);
-  //     // setLikedBy(likedBy.filter((x) => x !== userInfo!.name));
-  //   }
-  // };
+    if (product.countInStock < quantity) {
+      Alert.alert("Product out of stock!", "Sorry. Product is out of stock");
+      return;
+    }
+    ctxDispatch({
+      type: "CART_ADD_ITEM",
+      payload: { ...product, quantity },
+    });
+    router.navigate("/cart");
+  };
+  // Filter out products in the same category as the product on display(but not the  given product itself)
+  let relatedProducts = products?.filter(
+    (x) => x.category === product.category && x._id !== product._id
+  );
 
   return isLoading ? (
     <ActivityIndicator size="large" color="#0000ff" style={{ marginTop: 50 }} />
@@ -444,7 +442,14 @@ export default function ProductDetailScreen() {
               </Text>
             </View>
 
-            <View style={{ display: "flex", flexDirection: "row", gap: 4 }}>
+            <View
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                gap: 4,
+                alignItems: "center",
+              }}
+            >
               <View>
                 <Text style={{ fontSize: 10 }}>
                   {product.rating && product.rating.toFixed(1)}
@@ -653,6 +658,7 @@ export default function ProductDetailScreen() {
               </View>
             </View>
           </ScrollView>
+
           {/* Reviews */}
 
           {product.reviews && product.reviews.length > 0 && (
@@ -760,122 +766,7 @@ export default function ProductDetailScreen() {
 
           <View style={{ marginBottom: 20 }}>
             <ReviewList product={product} userInfo={userInfo} />
-            {/* <View>
-              {product.reviews
-                .sort((a, b) => {
-                  const dateA = new Date(a.createdAt).getTime();
-                  const dateB = new Date(b.createdAt).getTime();
-                  return dateB - dateA; // descending: most recent first
-                })
-                .slice(0, 5)
-                ?.map((item) => (
-                  <View
-                    key={item._id}
-                    style={{
-                      flex: 1,
-                      borderBottomColor: "gray",
-                      borderBottomWidth: 1,
-                      paddingVertical: 6,
-                      paddingHorizontal: 10,
-                      marginBottom: 10,
-                    }}
-                  >
-                    <Link href={`/reviews/${product._id}`}>
-                      <View
-                        style={{
-                          flexDirection: "column",
-                          alignItems: "flex-start",
-                          position: "relative",
-                        }}
-                      >
-                        <View
-                          style={{
-                            flexDirection: "row",
-                            marginBottom: 6,
-                            gap: 10,
-                          }}
-                        >
-                          {userInfo?.profileImage ? (
-                            <Image
-                              source={{ uri: userInfo?.profileImage }}
-                              style={{
-                                width: 30,
-                                height: 30,
-                                borderRadius: 15,
-                                marginRight: 10,
-                              }}
-                            />
-                          ) : (
-                            <View
-                              style={{
-                                width: 30,
-                                height: 30,
-                                borderRadius: 15,
-                                backgroundColor: "#318CE7",
-                                justifyContent: "center",
-                                alignItems: "center",
-                                //marginRight: 10,
-                              }}
-                            >
-                              <Text
-                                style={{ color: "white", fontWeight: "bold" }}
-                              >
-                                {item.name[0]}
-                              </Text>
-                            </View>
-                          )}
 
-                          <Text style={{ fontWeight: "bold" }}>
-                            {item.name}
-                          </Text>
-
-                          <Text>{item.createdAt.substring(0, 10)}</Text>
-                        </View>
-
-                        <Rating rating={item.rating} caption=" " />
-
-                        <View style={{ marginTop: 10 }}>
-                          <Text>{item.comment}</Text>
-                        </View>
-                        <View
-                          style={{
-                            flexDirection: "row",
-                            gap: 4,
-
-                            alignItems: "center",
-                          }}
-                        >
-                          <Text style={{ fontSize: 12, fontWeight: "700" }}>
-                            Helpful?
-                          </Text>
-                          <TouchableOpacity
-                            onPress={() => handleLike(item._id)}
-                          >
-                            {liked ? (
-                              <Ionicons
-                                name="thumbs-up-sharp"
-                                size={20}
-                                color="red"
-                              />
-                            ) : (
-                              <Ionicons
-                                name="thumbs-up-outline"
-                                size={20}
-                                color="red"
-                              />
-                            )}
-                            {likeCount > 0 && (
-                              <Text style={{ fontSize: 12, color: "red" }}>
-                                {likeCount}
-                              </Text>
-                            )}
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-                    </Link>
-                  </View>
-                ))}
-            </View> */}
             <View>
               {userInfo ? (
                 <View style={{ marginBottom: 25 }}>
@@ -913,6 +804,44 @@ export default function ProductDetailScreen() {
               )}
             </View>
           </View>
+
+          {/* Related Products   */}
+          {/* <View style={{ flex: 1, margin: 10 }} >
+            <Text style={{ fontSize: 20, fontWeight: "bold" }}>
+              Related Products
+            </Text>
+            {loadingProds ? (
+              <ActivityIndicator
+                size="large"
+                color="#0000ff"
+                style={{
+                  flex: 1,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              />
+            ) : errorInLoadingProds ? (
+              <Text
+                style={{
+                  flex: 1,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {getError(error as ApiError)}
+              </Text>
+            ) : (
+              <FlatList
+                data={relatedProducts}
+                // style={{ padding: 10 }}
+                numColumns={2}
+                keyExtractor={(item) => item._id}
+                renderItem={({ item }) => (
+                  <ProductCard item={item} onAddToCart={handleAddToCart} />
+                )}
+              />
+            )}
+          </View> */}
         </View>
       </ScrollView>
       {/* Stock and Add to Cart */}

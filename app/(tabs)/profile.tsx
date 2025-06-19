@@ -360,8 +360,8 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   auth: {
-    display: "flex",
-    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "center",
     gap: 10,
   },
   copyright: {
