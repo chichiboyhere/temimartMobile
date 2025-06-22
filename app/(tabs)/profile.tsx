@@ -1,6 +1,6 @@
 // React Native Profile Screen
 import React, { useContext, useState } from "react";
-import * as FileSystem from "expo-file-system";
+
 import {
   View,
   Text,
@@ -11,7 +11,7 @@ import {
   Alert,
   ScrollView,
 } from "react-native";
-import * as ImagePicker from "expo-image-picker";
+
 import { Store } from "@/Store";
 import { Link, useRouter } from "expo-router";
 import axios from "axios";
@@ -54,75 +54,14 @@ export default function ProfileScreen() {
     router.navigate("/");
   };
 
-  const pickImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
-
-    console.log(result);
-
-    if (!result.canceled) {
-      setImageUri(result.assets[0].uri);
-    } else {
-      alert("You did not select any image.");
-    }
-  };
-
-  // convert image file to base64
-  //   const setFileToBase64 = (file) => {
-  //  //todo
-  //   };
-
-  // const saveHandler = async () => {
-  //   try {
-  //     const { data } = await axios.put(
-  //       // "https://temimartapi.onrender.com/api/users/profile",
-  //       "http://192.168.8.101:4000/api/users/profile",
-  //       {
-  //         name,
-  //         email,
-  //         password,
-  //         profileImage: imageUri,
-  //       },
-  //       {
-  //         headers: { Authorization: `Bearer ${userInfo!.token}` },
-  //       }
-  //     );
-
-  //     //dispatch({ type: "USER_SIGNIN", payload: data });
-  //     Alert.alert("Success", "Profile updated");
-  //     setEditMode(false);
-  //   } catch (err) {
-  //     if (err instanceof Error) {
-  //       // Alert.alert("Error", err.response?.data?.message || "Update failed");
-  //       Alert.alert("Error", getError(err));
-  //     }
-  //   }
-  // };
-
   const saveHandler = async () => {
     try {
-      let base64Image = "";
-      if (imageUri) {
-        const fileInfo = await FileSystem.getInfoAsync(imageUri);
-        if (fileInfo.exists) {
-          const base64 = await FileSystem.readAsStringAsync(fileInfo.uri, {
-            encoding: FileSystem.EncodingType.Base64,
-          });
-          base64Image = `data:image/jpeg;base64,${base64}`;
-        }
-      }
-
       const { data } = await axios.put(
         "https://temimartapi.onrender.com/api/users/profile",
         {
           name,
           email,
           password,
-          profileImage: base64Image,
         },
         {
           headers: { Authorization: `Bearer ${userInfo!.token}` },
@@ -143,21 +82,9 @@ export default function ProfileScreen() {
     <ScrollView contentContainerStyle={styles.container}>
       {userInfo ? (
         <View style={styles.profile}>
-          <TouchableOpacity onPress={pickImage}>
-            {imageUri ? (
-              (console.log("User info", userInfo.name, userInfo?.profileImage),
-              (
-                <Image
-                  source={{ uri: userInfo.profileImage }}
-                  style={styles.avatar}
-                />
-              ))
-            ) : (
-              <View style={styles.avatarPlaceholder}>
-                <Text style={styles.initial}>{userInfo.name[0]}</Text>
-              </View>
-            )}
-          </TouchableOpacity>
+          <View style={styles.avatarPlaceholder}>
+            <Text style={styles.initial}>{userInfo.name[0]}</Text>
+          </View>
 
           {editMode ? (
             <>

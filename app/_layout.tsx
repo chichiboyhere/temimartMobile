@@ -13,8 +13,9 @@ export default function RootLayout() {
         <Stack
           screenOptions={{
             headerStyle: {
-              backgroundColor: "#ff9900",
+              backgroundColor: "#ff9900", //#ff9900
             },
+            //contentStyle: { backgroundColor: "white" },
             headerTintColor: "#fff",
             headerTitleStyle: {
               fontWeight: "bold",
@@ -25,7 +26,9 @@ export default function RootLayout() {
           <Stack.Screen name="+not-found" />
           <Stack.Screen
             name="productdetailscreen"
-            options={{ title: "Product" }}
+            options={{
+              title: "Product",
+            }}
           />
           <Stack.Screen name="signin" options={{ title: "SignIn" }} />
           <Stack.Screen name="signup" options={{ title: "SignUp" }} />

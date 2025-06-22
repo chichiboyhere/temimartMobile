@@ -19,7 +19,7 @@ import {
 } from "react-native";
 import { Badge } from "react-native-elements";
 
-import { useGetProductsQuery } from "@/hooks/productHooks";
+import RelatedProducts from "@/components/RelatedProducts";
 
 // For audio and vibration feedback when items are added to cart
 import * as Haptics from "expo-haptics";
@@ -34,7 +34,7 @@ import { RouteProp, useRoute } from "@react-navigation/native";
 import { Store } from "@/Store";
 import Rating from "@/components/Rating";
 import { Ionicons } from "@expo/vector-icons";
-import ProductCard from "@/components/ProductCard";
+import { useGetProductsQuery } from "@/hooks/productHooks";
 
 //import SelectDropdown from "react-native-select-dropdown";
 import { useGetProductDetailsBySlugQuery } from "@/hooks/productHooks";
@@ -76,15 +76,17 @@ type ProductDetailRouteProp = RouteProp<
 export default function ProductDetailScreen() {
   const { state, dispatch: ctxDispatch } = useContext(Store);
   const { cart, userInfo } = state;
+
+  const [currentUserExistingReview, setCurrentUserExistingReview] = useState<{
+    comment?: string | undefined;
+    rating?: number | undefined;
+  }>({});
+
   const {
     data: products,
     isLoading: loadingProds,
     error: errorInLoadingProds,
   } = useGetProductsQuery();
-  const [currentUserExistingReview, setCurrentUserExistingReview] = useState<{
-    comment?: string | undefined;
-    rating?: number | undefined;
-  }>({});
   const [cartItemsCount, setCartItemsCount] = useState(0);
   // Add to cart animation
   const animatedValue = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
@@ -128,6 +130,7 @@ export default function ProductDetailScreen() {
 
   useEffect(() => {
     const prodInCart = cart.cartItems.find((x) => x._id === product?._id);
+    setDisplayProdAdjumentButtons(prodInCart ? true : false);
     setProductQtyInCart(prodInCart ? prodInCart.quantity : 0);
   }, [cart.cartItems]);
 
@@ -358,8 +361,8 @@ export default function ProductDetailScreen() {
       type: "CART_ADD_ITEM",
       payload: { ...product, quantity },
     });
-    router.navigate("/cart");
   };
+
   // Filter out products in the same category as the product on display(but not the  given product itself)
   let relatedProducts = products?.filter(
     (x) => x.category === product.category && x._id !== product._id
@@ -468,7 +471,9 @@ export default function ProductDetailScreen() {
             <Text style={{ fontSize: 14 }}>Est. &nbsp;</Text>
             <Text style={{ fontSize: 20, color: "green" }}>
               &#x20A6;
-              {product.discount ? newPrice : product.price}
+              {product.discount
+                ? newPrice.toLocaleString("en-US")
+                : product.price.toLocaleString("en-US")}
             </Text>
           </View>
 
@@ -480,7 +485,7 @@ export default function ProductDetailScreen() {
                   <Text style={styles.saveText}>after applying promos to </Text>
                   <Text style={styles.nairaSymbolInDisc}>&#x20A6;</Text>
                   <Text style={styles.discountedPrice}>
-                    {disCountInFigures?.toFixed?.(0) || "0"}
+                    {disCountInFigures?.toLocaleString("en-US") || "0"}
                   </Text>
                   <Text style={styles.saveText}> |</Text>
                   <CountdownTimer item={product} color="white" />
@@ -765,7 +770,11 @@ export default function ProductDetailScreen() {
           </View>
 
           <View style={{ marginBottom: 20 }}>
-            <ReviewList product={product} userInfo={userInfo} />
+            <ReviewList
+              product={product}
+              userInfo={userInfo}
+              dispatch={dispatch}
+            />
 
             <View>
               {userInfo ? (
@@ -806,42 +815,12 @@ export default function ProductDetailScreen() {
           </View>
 
           {/* Related Products   */}
-          {/* <View style={{ flex: 1, margin: 10 }} >
-            <Text style={{ fontSize: 20, fontWeight: "bold" }}>
-              Related Products
-            </Text>
-            {loadingProds ? (
-              <ActivityIndicator
-                size="large"
-                color="#0000ff"
-                style={{
-                  flex: 1,
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              />
-            ) : errorInLoadingProds ? (
-              <Text
-                style={{
-                  flex: 1,
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                {getError(error as ApiError)}
-              </Text>
-            ) : (
-              <FlatList
-                data={relatedProducts}
-                // style={{ padding: 10 }}
-                numColumns={2}
-                keyExtractor={(item) => item._id}
-                renderItem={({ item }) => (
-                  <ProductCard item={item} onAddToCart={handleAddToCart} />
-                )}
-              />
-            )}
-          </View> */}
+          {/* <RelatedProducts
+            products={relatedProducts}
+            onAddToCart={handleAddToCart}
+            loading={loadingProds}
+            error={errorInLoadingProds}
+          /> */}
         </View>
       </ScrollView>
       {/* Stock and Add to Cart */}

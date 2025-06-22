@@ -95,7 +95,7 @@ const ProductCard: React.FC<Props> = ({ item, onAddToCart }) => {
                   <Text style={styles.saveText}>Save</Text>
                   <Text style={styles.nairaSymbolInDisc}>&#x20A6;</Text>
                   <Text style={styles.discountedPrice}>
-                    {disCountInFigures?.toFixed?.(0) || "0"}
+                    {disCountInFigures?.toLocaleString("en-US") || "0"}
                   </Text>
                   <Text style={styles.saveText}>extra</Text>
                 </View>
@@ -108,9 +108,13 @@ const ProductCard: React.FC<Props> = ({ item, onAddToCart }) => {
             <View style={styles.priceContainer}>
               <Text style={styles.nairaSymbol}>&#x20A6;</Text>
               {item.discount ? (
-                <Text style={styles.productPrice}>{newPrice}</Text>
+                <Text style={styles.productPrice}>
+                  {newPrice.toLocaleString("en-US")}
+                </Text>
               ) : (
-                <Text style={styles.productPrice}>{item.price}</Text>
+                <Text style={styles.productPrice}>
+                  {item.price.toLocaleString("en-US")}
+                </Text>
               )}
 
               {item.numSold && item.numSold >= 1000 ? (

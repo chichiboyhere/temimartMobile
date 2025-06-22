@@ -24,9 +24,11 @@ const Cart = () => {
     setNumItemsInCart(cartItems.reduce((a, c) => a + c.quantity, 0));
   });
   const getTotalPrice = () => {
-    return cartItems
+    const totalPrice = cartItems
       .reduce((total, item) => total + item.price * item.quantity, 0)
       .toFixed(2);
+
+    return totalPrice;
   };
 
   const router = useRouter();
@@ -101,7 +103,7 @@ const Cart = () => {
                     {item.name}
                   </Text>
                   <Text style={{ fontSize: 16, color: "green" }}>
-                    &#x20A6; {item.price}
+                    &#x20A6; {item.price.toLocaleString("en-US")}
                   </Text>
 
                   {/* Quantity Controls */}

@@ -34,6 +34,7 @@ export default function TabLayout() {
             backgroundColor: "gray",
             height: 30,
           },
+
           headerShadowVisible: false,
           headerTintColor: "black",
           tabBarStyle: {

@@ -219,9 +219,11 @@ import { Link } from "expo-router";
 interface Props {
   product: Product;
   userInfo: UserInfo;
+  updateProductRating: () => void;
+  dispatch: any;
 }
 
-const ReviewList: React.FC<Props> = ({ product, userInfo }) => {
+const ReviewList: React.FC<Props> = ({ product, userInfo, dispatch }) => {
   const [reviews, setReviews] = useState(product.reviews || []);
   const [likedReviews, setLikedReviews] = useState<{ [key: string]: boolean }>(
     {}
@@ -299,7 +301,13 @@ const ReviewList: React.FC<Props> = ({ product, userInfo }) => {
                 headers: { Authorization: `Bearer ${userInfo!.token}` },
               };
 
-              await axios.delete(url, config);
+              const { data } = await axios.delete(url, config);
+              product.numReviews = data.numReviews;
+              product.rating = data.rating;
+
+              Alert.alert("Deleted", "Review deleted successfully");
+
+              dispatch({ type: "REFRESH_PRODUCT", payload: product });
 
               // Update UI
               setReviews((prevReviews) =>
@@ -409,7 +417,11 @@ const ReviewList: React.FC<Props> = ({ product, userInfo }) => {
                   {loadingLikes[item._id] ? (
                     <ActivityIndicator size="small" color="red" />
                   ) : likedReviews[item._id] ? (
-                    <Ionicons name="thumbs-up-sharp" size={20} color="green" />
+                    <Ionicons
+                      name="thumbs-up-sharp"
+                      size={20}
+                      color="#ff9900"
+                    />
                   ) : (
                     <Ionicons name="thumbs-up-outline" size={20} color="gray" />
                   )}
@@ -429,17 +441,16 @@ const ReviewList: React.FC<Props> = ({ product, userInfo }) => {
                   <Ionicons name="trash" size={18} color="gray" />
                 </TouchableOpacity>
               )}
-
-              <View>
-                <Link href={`/reviews/${product._id}`}>
-                  <Text style={{ fontSize: 12, fontWeight: "700" }}>
-                    See more...
-                  </Text>
-                </Link>
-              </View>
             </View>
           </View>
         ))}
+      {product.numReviews > 5 && (
+        <View>
+          <Link href={`/reviews/${product._id}`}>
+            <Text style={{ fontSize: 12, fontWeight: "700" }}>See more...</Text>
+          </Link>
+        </View>
+      )}
     </View>
   );
 };
