@@ -39,7 +39,9 @@ import CountdownTimer from "@/components/CountdownTimer";
 import ProductCard from "@/components/ProductCard";
 import ReviewFormModal from "@/components/ReviewFormModal";
 import { format, addDays } from "date-fns";
-import Icon from "react-native-vector-icons/FontAwesome";
+
+// or MaterialIcons, etc.
+
 import PromoStaticBanner from "@/components/PromoStaticBanner";
 
 import ReviewList from "@/components/ReviewList";
@@ -469,7 +471,7 @@ export default function ProductDetailScreen() {
           )}
           {/* Shipping info */}
           <View style={styles.shippingHeader}>
-            <Icon name="ship" color={"green"} size={16} />
+            <Ionicons name="boat-sharp" color={"green"} size={16} />
             <Text style={{ color: "green", fontSize: 15, fontWeight: "600" }}>
               Free shipping on all orders
             </Text>
@@ -501,7 +503,7 @@ export default function ProductDetailScreen() {
               </Text>
             </View>
             <View>
-              <Icon name="caret-right" size={20} color="gray" />
+              <Ionicons name="arrow-forward" size={20} color="gray" />
             </View>
           </View>
           <View style={styles.guaranteeHeader}>
@@ -517,7 +519,7 @@ export default function ProductDetailScreen() {
               <Text style={{ fontSize: 15, color: "gray" }}>
                 6 Temi guarantees
               </Text>
-              <Icon name="caret-right" size={20} color="gray" />
+              <Ionicons name="arrow-forward" size={20} color="gray" />
             </View>
           </View>
           {/* Scrollable promotional features */}
@@ -584,16 +586,16 @@ export default function ProductDetailScreen() {
                     color="#F8921B"
                   />
                 </View>
-                <Icon name="caret-right" size={20} color="gray" />
+                <Ionicons name="arrow-forward" size={20} color="gray" />
               </View>
               <View style={styles.reviewHeader}>
                 <View style={styles.verifiedUserDesign}>
                   <Ionicons name="shield" size={30} color="white" />
-                  <Icon
-                    name="user"
+                  <Ionicons
+                    name="person-sharp"
                     size={14}
                     color="green"
-                    style={{ position: "absolute", left: 25, top: 22 }}
+                    style={{ position: "absolute", left: 23, top: 22 }}
                   />
                 </View>
                 <View

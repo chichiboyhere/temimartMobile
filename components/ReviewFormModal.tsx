@@ -1,4 +1,4 @@
-//And the ReviewFormModal
+//The ReviewFormModal
 import React, { useEffect, useState } from "react";
 import {
   Modal,
@@ -14,14 +14,6 @@ import {
   ScrollView,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
-
-// type HandleReviewSubmit = {
-//   onSubmitReview: (
-//     title: string,
-//     comment: string,
-//     rating: string | number
-//   ) => void;
-// };
 
 type ReviewData = {
   comment: string;

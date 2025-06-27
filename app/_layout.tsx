@@ -4,7 +4,17 @@ import { StatusBar } from "expo-status-bar";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { StripeProvider } from "@stripe/stripe-react-native";
 
+// import { Ionicons, FontAwesome } from "@expo/vector-icons";
+// import { useFonts } from "expo-font";
+
+// const [fontsLoaded] = useFonts({
+//   ...Ionicons.font,
+//   ...FontAwesome.font,
+// });
+
+// if (!fontsLoaded) return null; // or a splash/loading screen
 // Create a query client instance
+
 const queryClient = new QueryClient();
 // merchantIdentifier="merchant.com.yourapp" // To be applied to IOS build
 

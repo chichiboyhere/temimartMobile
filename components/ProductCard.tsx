@@ -49,15 +49,6 @@ const ProductCard: React.FC<Props> = ({ item, onAddToCart }) => {
     }
   }, [quantitySold, item.numSold]);
 
-  // useEffect(() => {
-  //   if (typeof item.discount === 'number' && item.discount > 0) {
-  //     const discount = (item.discount * item.price) / 100;
-  //     setDisCountInFigures(discount);
-  //     const newPrice = item.price - discount;
-  //     setNewPrice(newPrice);
-  //   }
-  // }, [item.discount]);
-
   useEffect(() => {
     if (typeof item.discount === "number" && item.discount > 0) {
       const discount = (item.discount * item.price) / 100;
@@ -139,6 +130,7 @@ const ProductCard: React.FC<Props> = ({ item, onAddToCart }) => {
             <View style={styles.priceContainer}>
               <Text style={styles.nairaSymbol}>&#x20A6;</Text>
               {typeof item.discount === "number" && item.discount > 0 ? (
+                // If we have a product with discount
                 <Text style={styles.productPrice}>
                   {typeof newPrice === "number"
                     ? newPrice.toLocaleString("en-US")
