@@ -11,7 +11,7 @@ import {
 import { Link } from "expo-router";
 import Rating from "./Rating";
 import { Ionicons } from "@expo/vector-icons";
-import { Product } from "@/types/Product";
+import { Product } from "@/app/types/Product";
 import CountdownTimer from "./CountdownTimer";
 
 interface Props {
@@ -49,14 +49,26 @@ const ProductCard: React.FC<Props> = ({ item, onAddToCart }) => {
     }
   }, [quantitySold, item.numSold]);
 
+  // useEffect(() => {
+  //   if (typeof item.discount === 'number' && item.discount > 0) {
+  //     const discount = (item.discount * item.price) / 100;
+  //     setDisCountInFigures(discount);
+  //     const newPrice = item.price - discount;
+  //     setNewPrice(newPrice);
+  //   }
+  // }, [item.discount]);
+
   useEffect(() => {
-    if (item.discount) {
+    if (typeof item.discount === "number" && item.discount > 0) {
       const discount = (item.discount * item.price) / 100;
       setDisCountInFigures(discount);
       const newPrice = item.price - discount;
       setNewPrice(newPrice);
+    } else {
+      setDisCountInFigures(0);
+      setNewPrice(item.price);
     }
-  }, [item.discount]);
+  }, [item.discount, item.price]);
 
   return (
     <Animated.View style={[styles.productItem, { opacity: fadeAnim }]}>
@@ -69,7 +81,7 @@ const ProductCard: React.FC<Props> = ({ item, onAddToCart }) => {
         >
           <View style={styles.productContent}>
             {/* Discount Badge */}
-            {item.discount && (
+            {typeof item.discount === "number" && item.discount > 0 && (
               <View style={styles.discountBadge}>
                 <Text style={styles.discountText}>{item.discount}% OFF</Text>
               </View>
@@ -89,17 +101,36 @@ const ProductCard: React.FC<Props> = ({ item, onAddToCart }) => {
             <Rating rating={item.rating} numReviews={item.numReviews} />
 
             {/* Discounted Price View */}
-            {item.discount && (
+            {/* {item.discount !== null && item.discount && item.discount > 0 && (
               <View style={styles.discountViewPlusCountdown}>
                 <View style={styles.discountedPriceContainer}>
                   <Text style={styles.saveText}>Save</Text>
                   <Text style={styles.nairaSymbolInDisc}>&#x20A6;</Text>
                   <Text style={styles.discountedPrice}>
-                    {disCountInFigures?.toLocaleString("en-US") || "0"}
+                   {typeof disCountInFigures === 'number'
+  ? disCountInFigures.toLocaleString("en-US")
+  : "0"}
+
                   </Text>
                   <Text style={styles.saveText}>extra</Text>
                 </View>
 
+                <CountdownTimer item={item} color="red" />
+              </View>
+            )} */}
+
+            {typeof item.discount === "number" && item.discount > 0 && (
+              <View style={styles.discountViewPlusCountdown}>
+                <View style={styles.discountedPriceContainer}>
+                  <Text style={styles.saveText}>Save</Text>
+                  <Text style={styles.nairaSymbolInDisc}>&#x20A6;</Text>
+                  <Text style={styles.discountedPrice}>
+                    {typeof disCountInFigures === "number"
+                      ? disCountInFigures.toLocaleString("en-US")
+                      : "0"}
+                  </Text>
+                  <Text style={styles.saveText}>extra</Text>
+                </View>
                 <CountdownTimer item={item} color="red" />
               </View>
             )}
@@ -107,9 +138,11 @@ const ProductCard: React.FC<Props> = ({ item, onAddToCart }) => {
             {/* Price */}
             <View style={styles.priceContainer}>
               <Text style={styles.nairaSymbol}>&#x20A6;</Text>
-              {item.discount ? (
+              {typeof item.discount === "number" && item.discount > 0 ? (
                 <Text style={styles.productPrice}>
-                  {newPrice.toLocaleString("en-US")}
+                  {typeof newPrice === "number"
+                    ? newPrice.toLocaleString("en-US")
+                    : item.price.toLocaleString("en-US")}
                 </Text>
               ) : (
                 <Text style={styles.productPrice}>

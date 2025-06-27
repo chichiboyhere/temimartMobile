@@ -1,4 +1,5 @@
 import { Review } from "./Review";
+
 export type Product = {
   _id: string;
   name: string;
@@ -10,6 +11,8 @@ export type Product = {
   countInStock: number;
   description: string;
   rating: number;
-  reviews: Review[] | null;
+  reviews: Review[];
   numReviews: number;
+  discount?: number | null | undefined;
+  numSold?: number;
 };

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useContext } from "react";
 
 import Ionicons from "@expo/vector-icons/Ionicons";
 
-import { useGetProductsQuery } from "@/hooks/productHooks";
+import { useGetProductsQuery } from "@/app/hooks/productHooks";
 import NetInfo from "@react-native-community/netinfo";
 import AnimatedNoInternetBanner from "@/components/AnimatedNoInternetBanner";
 import Banner from "@/components/Banner";
@@ -18,38 +18,15 @@ import {
   ScrollView,
   StyleSheet,
 } from "react-native";
-import FadeInView from "@/components/FadeIn";
-import Twirl from "@/components/Twirl";
-import GreenBoxAnimationApp from "@/components/GiftBox";
-import GiftsBanner from "@/components/GiftsBanner";
-import GiftWaveBanner from "@/components/GiftWaveBanner";
+
 import ProductCard from "../../components/ProductCard";
 import { Store } from "@/Store";
-import { Link, useRouter, useLocalSearchParams } from "expo-router";
-import { Product } from "@/types/Product";
-
-type Action =
-  | { type: "REFRESH_PRODUCT"; payload: Product }
-  | { type: "CREATE_REQUEST" }
-  | { type: "CREATE_SUCCESS" }
-  | { type: "CREATE_FAIL"; payload: string };
-
-const reducer = (state: any, action: Action) => {
-  switch (action.type) {
-    case "REFRESH_PRODUCT":
-      return { ...state, product: action.payload };
-    case "CREATE_SUCCESS":
-      return { ...state, loadingCreateReview: false };
-    case "CREATE_FAIL":
-      return { ...state, loadingCreateReview: false };
-    default:
-      return state;
-  }
-};
+import { useRouter } from "expo-router";
+import { Product } from "@/app/types/Product";
 
 export default function Index() {
   const { state, dispatch: ctxDispatch } = useContext(Store);
-  const { cart, userInfo } = state;
+  const { cart } = state;
   const router = useRouter();
 
   const { data: products, isLoading, error } = useGetProductsQuery();
@@ -218,36 +195,10 @@ export default function Index() {
           {/* Category list ends */}
           <Banner />
 
-          {/* <Twirl /> */}
-
-          {/* <GreenBoxAnimationApp /> */}
-
-          {/* <View
-            style={{
-              flex: 1,
-              alignItems: "center",
-              justifyContent: "center",
-              marginVertical: 40,
-            }}
-          >
-            <FadeInView
-              style={{
-                width: 250,
-                height: 50,
-                backgroundColor: "powderblue",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Text style={{ fontSize: 28 }}>Welcome</Text>
-            </FadeInView>
-          </View> */}
-
           {/* Product Grid */}
           {filteredProducts.length > 0 ? (
             <FlatList
               data={filteredProducts}
-              // style={{ padding: 10 }}
               numColumns={2}
               keyExtractor={(item) => item._id}
               renderItem={({ item }) => (

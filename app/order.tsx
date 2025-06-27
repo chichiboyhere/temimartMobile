@@ -14,15 +14,14 @@ import { Link } from "expo-router";
 
 import { Store } from "@/Store";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useRoute } from "@react-navigation/native";
+
 import { useRouter } from "expo-router";
 
 import { useCreateOrderMutation } from "./hooks/orderHooks";
 import { getError } from "./utils";
-import { ApiError } from "./types/ApiError";
+import { ApiError } from "@/app/types/ApiError";
 
 const OrdersScreen = () => {
-  const route = useRoute();
   const router = useRouter();
   const { mutateAsync: createOrder, isLoading } = useCreateOrderMutation();
   const { state, dispatch } = useContext(Store);
@@ -54,7 +53,7 @@ const OrdersScreen = () => {
   );
   cart.shippingPrice = cart.itemsPrice > 100 ? round2(0) : round2(10);
   cart.taxPrice = round2(0.15 * cart.itemsPrice);
-  cart.totalPrice = cart.itemsPrice + cart.shippingPrice + cart.taxPrice;
+  cart.totalPrice = cart.itemsPrice + cart.taxPrice; // + cart.shippingPrice // free shipping promo on
 
   return (
     <ScrollView style={{ flex: 1, padding: 15, backgroundColor: "#fff" }}>
@@ -123,7 +122,7 @@ const OrdersScreen = () => {
               <View>
                 <Text>{item.name}</Text>
                 <Text>Quantity: {item.quantity}</Text>
-                <Text>${item.price.toFixed(2)}</Text>
+                <Text>&#x20A6;{item.price.toFixed(2)}</Text>
               </View>
             </View>
           )}
@@ -131,6 +130,39 @@ const OrdersScreen = () => {
         />
         <Link
           href="/cart"
+          style={{
+            color: "blue",
+            textDecorationLine: "underline",
+            fontWeight: "bold",
+          }}
+        >
+          Edit
+        </Link>
+      </View>
+      {/* Payment Method */}
+
+      <View
+        style={{
+          marginBottom: 15,
+          padding: 10,
+          borderWidth: 1,
+          borderColor: "#ddd",
+          borderRadius: 5,
+        }}
+      >
+        <Text style={{ fontSize: 18, fontWeight: "bold", marginBottom: 10 }}>
+          Payment Method
+        </Text>
+        <View
+          style={{
+            marginBottom: 10,
+            paddingBottom: 10,
+          }}
+        >
+          <Text>Payment Method: : {cart.paymentMethod}</Text>
+        </View>
+        <Link
+          href="/paymentMethod"
           style={{
             color: "blue",
             textDecorationLine: "underline",
@@ -155,23 +187,29 @@ const OrdersScreen = () => {
           <Text style={{ fontSize: 18, fontWeight: "bold" }}>
             Shipping Cost:{" "}
           </Text>
-          <Text style={{ fontSize: 17 }}>${cart.shippingPrice.toFixed(2)}</Text>
+          <Text style={{ fontSize: 17 }}>
+            &#x20A6;{cart.shippingPrice.toFixed(2)}
+          </Text>
         </Text>
         <Text
           style={{ display: "flex", flexDirection: "row", marginBottom: 12 }}
         >
           <Text style={{ fontSize: 18, fontWeight: "bold" }}>Tax: </Text>
-          <Text style={{ fontSize: 17 }}>${cart.taxPrice.toFixed(2)}</Text>
+          <Text style={{ fontSize: 17 }}>
+            &#x20A6;{cart.taxPrice.toFixed(2)}
+          </Text>
         </Text>
         <Text style={{ display: "flex", flexDirection: "row" }}>
           <Text style={{ fontSize: 18, fontWeight: "bold" }}>Total: </Text>
-          <Text style={{ fontSize: 17 }}>${cart.totalPrice.toFixed(2)}</Text>
+          <Text style={{ fontSize: 17 }}>
+            &#x20A6;{cart.totalPrice.toFixed(2)}
+          </Text>
         </Text>
       </View>
       {/* Total & Payment Button */}
       <View
         style={{
-          marginTop: 20,
+          marginVertical: 20,
         }}
       >
         <TouchableOpacity style={styles.button} onPress={placeOrderHandler}>
@@ -192,7 +230,6 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 5,
     alignItems: "center",
-    marginTop: 10,
   },
 });
 

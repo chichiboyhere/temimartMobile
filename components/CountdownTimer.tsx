@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Product } from "@/types/Product";
+import { Product } from "@/app/types/Product";
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 

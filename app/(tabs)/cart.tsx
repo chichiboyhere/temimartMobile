@@ -10,7 +10,7 @@ import {
 import { Store } from "@/Store";
 
 import { Link, useRouter } from "expo-router";
-import { CartItem } from "@/types/Cart";
+import { CartItem } from "@/app/types/Cart";
 
 const Cart = () => {
   const { state, dispatch: ctxDispatch } = useContext(Store);

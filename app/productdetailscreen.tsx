@@ -15,39 +15,33 @@ import {
   Alert,
   Animated,
   StyleSheet,
-  FlatList,
 } from "react-native";
 import { Badge } from "react-native-elements";
-
-import RelatedProducts from "@/components/RelatedProducts";
 
 // For audio and vibration feedback when items are added to cart
 import * as Haptics from "expo-haptics";
 import { Audio } from "expo-av";
 
 import axios from "axios";
-//import { Product } from "./types/Product";
-import { Product } from "@/types/Product";
-import { CartItem } from "./types/Cart";
+
+import { Product } from "@/app/types/Product";
+
 import { Link, useRouter, useLocalSearchParams } from "expo-router";
-import { RouteProp, useRoute } from "@react-navigation/native";
+import { RouteProp } from "@react-navigation/native";
 import { Store } from "@/Store";
 import Rating from "@/components/Rating";
 import { Ionicons } from "@expo/vector-icons";
-import { useGetProductsQuery } from "@/hooks/productHooks";
-
-//import SelectDropdown from "react-native-select-dropdown";
-import { useGetProductDetailsBySlugQuery } from "@/hooks/productHooks";
-
-//import Ionicons from "@expo/vector-icons/Ionicons";
-import { ApiError } from "./types/ApiError";
+import { useGetProductsQuery } from "@/app/hooks/productHooks";
+import { useGetProductDetailsBySlugQuery } from "@/app/hooks/productHooks";
+import { ApiError } from "@/app/types/ApiError";
 import { getError } from "../utils";
 import CountdownTimer from "@/components/CountdownTimer";
-import ReviewFormModal from "@/components/CustomModal";
+import ProductCard from "@/components/ProductCard";
+import ReviewFormModal from "@/components/ReviewFormModal";
 import { format, addDays } from "date-fns";
 import Icon from "react-native-vector-icons/FontAwesome";
+import PromoStaticBanner from "@/components/PromoStaticBanner";
 
-import { Review } from "./types/Review";
 import ReviewList from "@/components/ReviewList";
 type Action =
   | { type: "REFRESH_PRODUCT"; payload: Product }
@@ -78,10 +72,10 @@ export default function ProductDetailScreen() {
   const { cart, userInfo } = state;
 
   const [currentUserExistingReview, setCurrentUserExistingReview] = useState<{
-    comment?: string | undefined;
-    rating?: number | undefined;
+    comment?: string;
+    rating?: number;
   }>({});
-
+  // An attempt at implementing related products to be displayed at the bottom of the productdetail screen
   const {
     data: products,
     isLoading: loadingProds,
@@ -105,16 +99,8 @@ export default function ProductDetailScreen() {
   const [disCountInFigures, setDisCountInFigures] = useState(0);
   const [newPrice, setNewPrice] = useState(0);
 
-  type ReviewProp = {
-    rating: number | undefined;
-    comment: string | undefined;
-  };
-
-  //const route = useRoute<ProductDetailRouteProp>();
-
   const { slug } = useLocalSearchParams();
 
-  //const { slug  } = route.params;
   const {
     data: product,
     isLoading,
@@ -134,21 +120,14 @@ export default function ProductDetailScreen() {
     setProductQtyInCart(prodInCart ? prodInCart.quantity : 0);
   }, [cart.cartItems]);
 
-  // useEffect(() => {
-  //   if (product?.reviews && userInfo?.name) {
-  //     const currentUserReview = product.reviews.find(
-  //       (review) => review.name === userInfo.name
-  //     );
+  useEffect(() => {
+    const currentUser = userInfo?.name;
+    const currentUsersReview = product?.reviews.find(
+      (review) => review.name === currentUser
+    );
 
-  //     if (currentUserReview) {
-  //       const { comment, rating } = currentUserReview;
-  //       setCurrentUserExistingReview({ comment, rating });
-  //     } else {
-  //       setCurrentUserExistingReview({});
-  //     }
-  //   }
-  //   // console.log("Current user data", currentUserExistingReview);
-  // }, [product?.reviews, userInfo]);
+    setCurrentUserExistingReview(currentUsersReview || {});
+  }, [product?.reviews]);
 
   useEffect(() => {
     if (product?.reviews?.length) {
@@ -211,7 +190,6 @@ export default function ProductDetailScreen() {
         payload: { ...product, quantity },
       });
     } else if (updateType === "minus") {
-      // const quantity = item ? item.quantity - 1 : null;
       const quantity = item ? item.quantity - 1 : 0;
       setProductQtyInCart(quantity);
       ctxDispatch({
@@ -228,7 +206,7 @@ export default function ProductDetailScreen() {
 
   const playAddToCartSound = async () => {
     const { sound } = await Audio.Sound.createAsync(
-      require("../assets/sounds/add-to-cart.wav") // Replace with your sound file
+      require("../assets/sounds/add-to-cart.wav")
     );
     await sound.playAsync();
   };
@@ -302,7 +280,6 @@ export default function ProductDetailScreen() {
     rating: string | number;
   }) => {
     if (!comment || !rating) {
-      console.log("Review at details page", { comment, rating });
       Alert.alert("Blank Field(s)", "Please fill in all the fields");
       return;
     }
@@ -313,7 +290,7 @@ export default function ProductDetailScreen() {
       );
 
       dispatch({ type: "REFRESH_PRODUCT", payload: product });
-      console.log("Remaining reviews", remainingReviews);
+
       const { data } = await axios.post(
         `https://temimartapi.onrender.com/api/products/${product._id}/reviews`,
         { rating, comment, name: userInfo!.name },
@@ -349,29 +326,9 @@ export default function ProductDetailScreen() {
     }
   };
 
-  const handleAddToCart = (product: Product) => {
-    const existItem = cart.cartItems.find((x) => x._id === product?._id);
-    const quantity = existItem ? existItem.quantity + 1 : 1;
-
-    if (product.countInStock < quantity) {
-      Alert.alert("Product out of stock!", "Sorry. Product is out of stock");
-      return;
-    }
-    ctxDispatch({
-      type: "CART_ADD_ITEM",
-      payload: { ...product, quantity },
-    });
-  };
-
-  // Filter out products in the same category as the product on display(but not the  given product itself)
-  let relatedProducts = products?.filter(
-    (x) => x.category === product.category && x._id !== product._id
-  );
-
   return isLoading ? (
     <ActivityIndicator size="large" color="#0000ff" style={{ marginTop: 50 }} />
   ) : error ? (
-    // <View>{getError(error as ApiError)}</View>
     <View style={{ padding: 20 }}>
       <Text style={{ color: "red", fontSize: 16 }}>
         {getError(error as ApiError)}
@@ -386,10 +343,8 @@ export default function ProductDetailScreen() {
   ) : (
     <View style={{ flex: 1 }}>
       <ScrollView
-        style={{
-          flex: 1,
-          backgroundColor: "#fff",
-        }}
+        style={{ flex: 1, backgroundColor: "#fff" }}
+        contentContainerStyle={{ paddingBottom: 100 }}
       >
         <Image
           source={{ uri: product.image }}
@@ -398,22 +353,7 @@ export default function ProductDetailScreen() {
             productImageLayout.current = event.nativeEvent.layout;
           }}
         />
-        {/* Banner */}
-        <View style={styles.productImageBanner}>
-          <View style={styles.productImageBannerInner}>
-            <Ionicons name="checkmark" size={18} color="green" />
-            <Text style={styles.productImageBannerText}>
-              Free shipping on all orders
-            </Text>
-          </View>
-          <View style={styles.productImageBannerMiddle}></View>
-          <View style={styles.productImageBannerInner}>
-            <Ionicons name="checkmark" size={18} color="green" />
-            <Text style={styles.productImageBannerText}>
-              &#x20A6; 1,600 Credit for delay
-            </Text>
-          </View>
-        </View>
+        <PromoStaticBanner />
         {/* Product Details */}
         <View style={{ padding: 15 }}>
           <Text
@@ -455,10 +395,15 @@ export default function ProductDetailScreen() {
             >
               <View>
                 <Text style={{ fontSize: 10 }}>
-                  {product.rating && product.rating.toFixed(1)}
+                  {typeof product.discount === "number" && product.discount > 0
+                    ? product.rating.toFixed(1)
+                    : null}
                 </Text>
               </View>
-              {product.rating && <Rating rating={product.rating} caption=" " />}
+              {/* {product.rating && <Rating rating={product.rating} caption=" " />} */}
+              {typeof product.discount === "number" && product.discount > 0 && (
+                <Rating rating={product.rating} caption=" " />
+              )}
             </View>
           </View>
           <View
@@ -471,14 +416,14 @@ export default function ProductDetailScreen() {
             <Text style={{ fontSize: 14 }}>Est. &nbsp;</Text>
             <Text style={{ fontSize: 20, color: "green" }}>
               &#x20A6;
-              {product.discount
+              {typeof product.discount === "number" && product.discount > 0
                 ? newPrice.toLocaleString("en-US")
                 : product.price.toLocaleString("en-US")}
             </Text>
           </View>
 
           {/* Discount offer */}
-          {product.discount && (
+          {typeof product.discount === "number" && product.discount > 0 && (
             <View style={{ gap: 8, marginBottom: 10 }}>
               <View style={styles.discountViewPlusCountdown}>
                 <View style={styles.discountedPriceContainer}>
@@ -523,17 +468,7 @@ export default function ProductDetailScreen() {
             </View>
           )}
           {/* Shipping info */}
-          <View
-            style={{
-              borderTopWidth: 6,
-              borderColor: "#D3D3D3",
-              paddingVertical: 10,
-              flexDirection: "row",
-              justifyContent: "flex-start",
-              alignItems: "center",
-              gap: 6,
-            }}
-          >
+          <View style={styles.shippingHeader}>
             <Icon name="ship" color={"green"} size={16} />
             <Text style={{ color: "green", fontSize: 15, fontWeight: "600" }}>
               Free shipping on all orders
@@ -554,36 +489,13 @@ export default function ProductDetailScreen() {
               <Text>Speedaf</Text>
             </View>
           </View>
-          <View
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              justifyContent: "space-between",
-              borderTopWidth: 1,
-              borderColor: "gray",
-              paddingVertical: 10,
-            }}
-          >
-            <View
-              style={{
-                flexDirection: "row",
-                gap: 5,
-                justifyContent: "flex-start",
-                alignItems: "center",
-              }}
-            >
+          <View style={styles.safePay}>
+            <View style={styles.safePayInner}>
               <Ionicons name="shield-sharp" size={16} color="green" />
               <Text style={{ fontSize: 15, color: "green" }}>
                 Safe payments
               </Text>
-              <View
-                style={{
-                  width: 3,
-                  height: 3,
-                  borderRadius: 50,
-                  backgroundColor: "green",
-                }}
-              ></View>
+              <View style={styles.greenDotDivider}></View>
               <Text style={{ fontSize: 15, color: "green" }}>
                 Secure privacy
               </Text>
@@ -592,15 +504,7 @@ export default function ProductDetailScreen() {
               <Icon name="caret-right" size={20} color="gray" />
             </View>
           </View>
-          <View
-            style={{
-              borderTopColor: "gray",
-              borderTopWidth: 1,
-              paddingVertical: 10,
-              flexDirection: "row",
-              justifyContent: "space-between",
-            }}
-          >
+          <View style={styles.guaranteeHeader}>
             <View
               style={{ flexDirection: "row", gap: 5, alignItems: "center" }}
             >
@@ -616,21 +520,13 @@ export default function ProductDetailScreen() {
               <Icon name="caret-right" size={20} color="gray" />
             </View>
           </View>
+          {/* Scrollable promotional features */}
           <ScrollView
             horizontal={true}
             showsHorizontalScrollIndicator={false}
             style={{ borderBottomWidth: 6, borderColor: "#D3D3D3" }}
           >
-            <View
-              style={{
-                flexDirection: "row",
-                gap: 7,
-                alignItems: "center",
-                marginVertical: 10,
-                height: 40,
-                paddingVertical: 5,
-              }}
-            >
+            <View style={styles.scrollablePromoContainer}>
               <View style={styles.shippingScrollViewItem}>
                 <Text style={styles.shippingScrollViewItemText}>
                   90-Day Returns
@@ -668,21 +564,8 @@ export default function ProductDetailScreen() {
 
           {product.reviews && product.reviews.length > 0 && (
             <>
-              <View
-                style={{
-                  marginTop: 19,
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                }}
-              >
-                <View
-                  style={{
-                    display: "flex",
-                    flexDirection: "row",
-                    gap: 5,
-                    alignItems: "center",
-                  }}
-                >
+              <View style={styles.averageStarReviewContainer}>
+                <View style={styles.averageRatingContainer}>
                   <Text style={{ fontSize: 18, fontWeight: "bold" }}>
                     {product.rating && product.rating.toFixed(1)}
                   </Text>
@@ -703,32 +586,8 @@ export default function ProductDetailScreen() {
                 </View>
                 <Icon name="caret-right" size={20} color="gray" />
               </View>
-              <View
-                style={{
-                  marginTop: 15,
-                  display: "flex",
-                  flexDirection: "row",
-                  justifyContent: "flex-start",
-                  backgroundColor: "rgba(144, 238, 144, 0.3)",
-                  alignItems: "center",
-                  height: 60,
-                  borderColor: "green",
-                  borderWidth: 1,
-                  borderRadius: 5,
-                  width: "100%",
-                }}
-              >
-                <View
-                  style={{
-                    backgroundColor: "green",
-                    height: 60,
-                    width: 60,
-                    alignItems: "center",
-                    justifyContent: "center",
-                    borderTopLeftRadius: 5,
-                    borderBottomLeftRadius: 5,
-                  }}
-                >
+              <View style={styles.reviewHeader}>
+                <View style={styles.verifiedUserDesign}>
                   <Ionicons name="shield" size={30} color="white" />
                   <Icon
                     name="user"
@@ -742,19 +601,8 @@ export default function ProductDetailScreen() {
                     gap: 1,
                   }}
                 >
-                  <Text
-                    style={{
-                      fontSize: 22,
-                      fontWeight: "bold",
-                      color: "green",
-                      marginLeft: 10,
-                    }}
-                  >
-                    Reviews
-                  </Text>
-                  <Text
-                    style={{ fontSize: 12, color: "green", marginLeft: 10 }}
-                  >
+                  <Text style={styles.reviewTitle}>Reviews</Text>
+                  <Text style={styles.reviewBodyText}>
                     All reviews are from verified purchasers
                   </Text>
                 </View>
@@ -769,58 +617,97 @@ export default function ProductDetailScreen() {
             )}
           </View>
 
+          {/* Review List */}
           <View style={{ marginBottom: 20 }}>
             <ReviewList
               product={product}
               userInfo={userInfo}
               dispatch={dispatch}
             />
+          </View>
 
-            <View>
-              {userInfo ? (
-                <View style={{ marginBottom: 25 }}>
-                  <ReviewFormModal
-                    onSubmitReview={submit}
-                    review={currentUserExistingReview}
-                  />
-                </View>
-              ) : (
-                <View
+          <View>
+            {userInfo ? (
+              <View style={{ marginBottom: 25 }}>
+                <ReviewFormModal
+                  onSubmitReview={submit}
+                  review={currentUserExistingReview} // ✅ passed as optional with correct structure
+                />
+              </View>
+            ) : (
+              <View
+                style={{
+                  display: "flex",
+                  flexDirection: "row",
+                  marginBottom: 25,
+                }}
+              >
+                <Text
                   style={{
-                    display: "flex",
-                    flexDirection: "row",
-                    marginBottom: 25,
+                    color: "blue",
+                    textDecorationLine: "underline",
+                    fontWeight: "bold",
+                    fontSize: 18,
                   }}
                 >
-                  <Text
-                    style={{
-                      color: "blue",
-                      textDecorationLine: "underline",
-                      fontWeight: "bold",
-                      fontSize: 18,
-                    }}
-                  >
-                    <Link href="/signin">Sign in </Link>
-                  </Text>
-                  <Text
-                    style={{
-                      fontSize: 18,
-                    }}
-                  >
-                    to leave a review
-                  </Text>
-                </View>
-              )}
-            </View>
+                  <Link href="/signin">Sign in </Link>
+                </Text>
+                <Text style={{ fontSize: 18 }}>to leave a review</Text>
+              </View>
+            )}
           </View>
 
           {/* Related Products   */}
-          {/* <RelatedProducts
-            products={relatedProducts}
-            onAddToCart={handleAddToCart}
-            loading={loadingProds}
-            error={errorInLoadingProds}
-          /> */}
+          {products && products.length > 0 && (
+            <View style={{ marginTop: 30 }}>
+              <Text
+                style={{
+                  fontSize: 20,
+                  fontWeight: "bold",
+                  marginBottom: 10,
+                  paddingHorizontal: 15,
+                }}
+              >
+                Related Products
+              </Text>
+
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingHorizontal: 15 }}
+              >
+                <View style={{ flexDirection: "row", gap: 10 }}>
+                  {products
+                    .filter(
+                      (p) =>
+                        p._id !== product._id && p.category === product.category
+                    )
+                    .map((relatedProduct) => (
+                      <ProductCard
+                        key={relatedProduct._id}
+                        item={relatedProduct}
+                        onAddToCart={() => {
+                          // Optional handler for adding related product to cart
+                          const quantity = 1;
+                          if (relatedProduct.countInStock < 1) {
+                            Alert.alert(
+                              "Out of stock",
+                              "This product is unavailable."
+                            );
+                            return;
+                          }
+                          ctxDispatch({
+                            type: "CART_ADD_ITEM",
+                            payload: { ...relatedProduct, quantity },
+                          });
+                          Haptics.selectionAsync();
+                        }}
+                      />
+                    ))}
+                </View>
+              </ScrollView>
+            </View>
+          )}
         </View>
       </ScrollView>
       {/* Stock and Add to Cart */}
@@ -986,31 +873,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginRight: 2,
   },
-  productImageBanner: {
-    // width: "100%",
-    height: 30,
-    paddingVertical: 3,
-    backgroundColor: "#ffd580",
-    paddingHorizontal: 10,
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  productImageBannerText: {
-    fontSize: 12,
-    fontWeight: "bold",
-  },
-  productImageBannerMiddle: {
-    width: 1,
-    height: "90%",
-    backgroundColor: "black",
-    marginHorizontal: 5,
-  },
-  productImageBannerInner: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
 
   addToCartButton: {
     backgroundColor: "#ff9900",
@@ -1117,4 +979,89 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "bold",
   },
+  shippingHeader: {
+    borderTopWidth: 6,
+    borderColor: "#D3D3D3",
+    paddingVertical: 10,
+    flexDirection: "row",
+    justifyContent: "flex-start",
+    alignItems: "center",
+    gap: 6,
+  },
+  safePay: {
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    borderTopWidth: 1,
+    borderColor: "gray",
+    paddingVertical: 10,
+  },
+  safePayInner: {
+    flexDirection: "row",
+    gap: 5,
+    justifyContent: "flex-start",
+    alignItems: "center",
+  },
+  greenDotDivider: {
+    width: 3,
+    height: 3,
+    borderRadius: 50,
+    backgroundColor: "green",
+  },
+  guaranteeHeader: {
+    borderTopColor: "gray",
+    borderTopWidth: 1,
+    paddingVertical: 10,
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  scrollablePromoContainer: {
+    flexDirection: "row",
+    gap: 7,
+    alignItems: "center",
+    marginVertical: 10,
+    height: 40,
+    paddingVertical: 5,
+  },
+
+  averageStarReviewContainer: {
+    marginTop: 19,
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  averageRatingContainer: {
+    display: "flex",
+    flexDirection: "row",
+    gap: 5,
+    alignItems: "center",
+  },
+  reviewHeader: {
+    marginTop: 15,
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "flex-start",
+    backgroundColor: "rgba(144, 238, 144, 0.3)",
+    alignItems: "center",
+    height: 60,
+    borderColor: "green",
+    borderWidth: 1,
+    borderRadius: 5,
+    width: "100%",
+  },
+  verifiedUserDesign: {
+    backgroundColor: "green",
+    height: 60,
+    width: 60,
+    alignItems: "center",
+    justifyContent: "center",
+    borderTopLeftRadius: 5,
+    borderBottomLeftRadius: 5,
+  },
+  reviewTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "green",
+    marginLeft: 10,
+  },
+  reviewBodyText: { fontSize: 12, color: "green", marginLeft: 10 },
 });

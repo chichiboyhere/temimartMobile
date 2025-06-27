@@ -1,6 +1,7 @@
 import React, { useEffect, useReducer, useState } from "react";
-import { Cart, CartItem, ShippingAddress } from "./types/Cart";
-import { UserInfo } from "./types/UserInfo";
+
+import { Cart, CartItem, ShippingAddress } from "@/app/types/Cart";
+import { UserInfo } from "@/app/types/UserInfo";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type AppState = {
@@ -73,7 +74,7 @@ function reducer(state: AppState, action: Action): AppState {
       return {
         cart: {
           cartItems: [],
-          paymentMethod: "PayPal",
+          paymentMethod: "",
           shippingAddress: {
             fullName: "",
             address: "",

@@ -9,7 +9,7 @@ import {
 import { useEffect, useState, useContext } from "react";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-//import styles from "@/constants/styles";
+
 import { Store } from "@/Store";
 
 export default function Shipping() {
@@ -59,7 +59,7 @@ export default function Shipping() {
         country,
       })
     );
-    router.navigate("/order");
+    router.navigate("/paymentMethod");
   };
 
   return (

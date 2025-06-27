@@ -14,8 +14,8 @@ import { Link, useRouter } from "expo-router";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import { useSignupMutation } from "@/hooks/userHooks";
-import { ApiError } from "./types/ApiError";
+import { useSignupMutation } from "@/app/hooks/userHooks";
+
 import { getError } from "../utils";
 
 const Signup = () => {

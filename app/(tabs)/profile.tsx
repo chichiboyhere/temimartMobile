@@ -16,7 +16,7 @@ import { Store } from "@/Store";
 import { Link, useRouter } from "expo-router";
 import axios from "axios";
 import { getError } from "../utils";
-import Ionicons from "@expo/vector-icons/Ionicons";
+
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function ProfileScreen() {
@@ -72,9 +72,9 @@ export default function ProfileScreen() {
       console.log(data);
       setEditMode(false);
     } catch (err) {
-      if (err instanceof Error) {
-        Alert.alert("Error", getError(err));
-      }
+      // if (err ) {
+      Alert.alert("Error", getError(err));
+      //}
     }
   };
 

@@ -9,8 +9,8 @@ import {
 } from "react-native";
 import { useRouter, Link } from "expo-router";
 
-import { useGetOrderHistoryQuery } from "../hooks/orderHooks";
-import { ApiError } from "../types/ApiError";
+import { useGetOrderHistoryQuery } from "@/app/hooks/orderHooks";
+import { ApiError } from "@/app/types/ApiError";
 import { getError } from "../utils";
 
 export default function OrderHistory() {
